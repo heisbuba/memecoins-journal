@@ -45,14 +45,14 @@ body {
 }
 
 h1 {
-  font-size: 1.375rem; /* 22px */
+  font-size: 22px;
   margin: 0 0 16px;
   font-weight: 700;
   line-height: 1.3;
 }
 
 h2 {
-  font-size: 1rem; /* 16px */
+  font-size: 16px; 
   margin: 0 0 12px;
   color: var(--pri);
   font-weight: 600;
@@ -69,7 +69,7 @@ h2 {
   margin-bottom: 16px;
 }
 
-/* Card Action Button Bar (Prevents cutoff / overflow) */
+/* Card Action Button Bar */
 .card > p {
   display: flex;
   flex-wrap: wrap;
@@ -117,7 +117,7 @@ textarea {
   background: var(--bg);
   color: var(--tx);
   font: inherit;
-  font-size: 1rem; /* 16px to prevent iOS auto-zoom */
+  font-size: 16px;
   min-height: 42px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -146,7 +146,7 @@ button {
   background: var(--pri);
   color: #ffffff;
   font-weight: 600;
-  font-size: 0.875rem; /* 14px */
+  font-size: 14px;
   cursor: pointer;
   min-height: 42px;
   touch-action: manipulation;
@@ -190,14 +190,14 @@ button:disabled {
 
 .k b {
   display: block;
-  font-size: 1.25rem; /* 20px */
+  font-size: 20px; 
   font-weight: 700;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
 
 .k span {
-  font-size: 0.75rem; /* 12px */
+  font-size: 12px; 
   color: var(--mut);
   margin-top: 4px;
   display: block;
@@ -220,7 +220,7 @@ button:disabled {
 table {
   border-collapse: collapse;
   width: 100%;
-  font-size: 0.875rem; /* 14px */
+  font-size: 14px;
 }
 
 th,
@@ -237,7 +237,7 @@ th {
   top: 0;
   background: var(--card);
   font-weight: 600;
-  font-size: 0.75rem; /* 12px */
+  font-size: 12px; 
   text-transform: uppercase;
   letter-spacing: 0.04em;
   z-index: 1;
@@ -255,7 +255,7 @@ tbody tr:hover {
 #tb th:nth-child(8), #tb td:nth-child(8), /* PnL */
 #tb th:nth-child(9), #tb td:nth-child(9), /* Result */
 #tb th:nth-child(10), #tb td:nth-child(10), /* R */
-#tb th:nth-child(11), #tb td:nth-child(11), /* Overshoot */
+#tb th:nth-child(11), #tb td:nth-child(11), /* SL-exceed */
 #tb th:nth-child(12), #tb td:nth-child(12)  /* Hold */ {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -344,7 +344,7 @@ th.srt:hover {
   }
 
   table {
-    font-size: 0.8125rem; /* 13px */
+    font-size: 13px; 
   }
 
   th,
