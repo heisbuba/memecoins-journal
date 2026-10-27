@@ -1,53 +1,12 @@
 const H = [
-  "Date", "Ticker", "Strategy", "MC", "Price", "Entry Time",
-  "SL", "TP", "RRR", "PnL", "Exit Time", "Exit MC", "Review", "Tags", "Notes"
+  "Date", "Ticker", "Strategy", "Entry MC", "Price", "Entry Time",
+  "SL", "TP", "RRR", "PnL", "Exit MC",  "Exit Time", "Review", "Tags", "Notes"
 ];
 const BE = 0.01;
 
-function parseCSV(t) {
-  const o = [];
-  let r = [], f = "", q = 0;
-  for (let i = 0; i < t.length; i++) {
-    const c = t[i];
-    if (q) {
-      if (c == '"') {
-        if (t[i + 1] == '"') {
-          f += '"';
-          i++;
-        } else {
-          q = 0;
-        }
-      } else {
-        f += c;
-      }
-    } else if (c == '"') {
-      q = 1;
-    } else if (c == ",") {
-      r.push(f);
-      f = "";
-    } else if (c == "\n" || c == "\r") {
-      if (c == "\r" && t[i + 1] == "\n") i++;
-      r.push(f);
-      o.push(r);
-      r = [];
-      f = "";
-    } else {
-      f += c;
-    }
-  }
-  if (f !== "" || r.length) {
-    r.push(f);
-    o.push(r);
-  }
-  const h = o.shift() || [];
-  return o
-    .filter(a => a.some(x => x.trim()))
-    .map(a => Object.fromEntries(h.map((k, i) => [k.trim(), a[i] || ""])));
-}
-
 const esc = v => /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
 
-// normalise unicode minus/dashes (U+2212, en/em dash) so pasted "−34%" parses
+// normalise unicode minus/dashes
 const clean = s => String(s ?? "").replace(/[\u2212\u2013\u2014]/g, "-").trim();
 
 const num = s => {
@@ -98,15 +57,13 @@ const pf = s => {
   return isNaN(v) ? "" : v + "%";
 };
 
-// single place that normalises SL/TP/PnL and derives RRR: used by add, CSV, JSON and legacy-JSON import
+// single place that normalises SL/TP/PnL and derives RRR
 function finalize(r) {
   ["SL", "TP", "PnL"].forEach(k => (r[k] = pf(r[k])));
   const c = calc(r);
   r.RRR = c.rrr != null ? "1:" + c.rrr.toFixed(1) : "";
   return r;
 }
-
-const fromRow = o => finalize(Object.fromEntries(H.map(k => [k, String(o[k] ?? "").trim()])));
 
 // average that shows "-" instead of a fake 0 when there is no data
 const fmtAvg = (a, f) => (a.length ? f(avg(a)) : "-");
@@ -118,37 +75,10 @@ const mcv = s => {
     : null;
 };
 
-function fromOld(o) {
-  const e = mcv(o.entry_mcap);
-  const raw = String(o.take_profit || "").trim();
-  let tp = raw;
-  if (/[kmb]$/i.test(raw) && e && mcv(raw)) {
-    tp = ((mcv(raw) / e - 1) * 100).toFixed(1) + "%";
-  }
-  const r = {
-    Date: o.trade_date || "",
-    Ticker: o.ticker || "",
-    Strategy: o.strategy || "",
-    MC: o.entry_mcap || "",
-    Price: o.entry_price || "",
-    "Entry Time": o.entry_time || "",
-    SL: pf(o.stop_loss || ""),
-    TP: pf(tp),
-    RRR: "",
-    PnL: pf(o.pnl || ""),
-    "Exit Time": o.exit_time || "",
-    "Exit MC": o.exit_mcap || "",
-    Review: o.rules_followed ? "Plan" : "Mistake",
-    Tags: Array.isArray(o.tags) ? o.tags.join(", ") : (o.tags || ""),
-    Notes: o.notes || ""
-  };
-  return finalize(r);
-}
-
-// lets the pure functions be unit-tested in Node; ignored in the browser
+// test pure functions in Node
 if (typeof module !== "undefined") {
   module.exports = {
-    H, BE, parseCSV, esc, num, mins, calc, sum, avg, pc, cl, esc2,
-    pf, finalize, fromRow, fmtAvg, mcv, fromOld, clean
+    H, BE, esc, num, mins, calc, sum, avg, pc, cl, esc2,
+    pf, finalize, fmtAvg, mcv, clean
   };
 }
