@@ -1,4 +1,4 @@
-// Guards every /api/* route except /api/login. Fails closed if SECRET is missing.
+// Guards every /api/* route except /api/login.
 const enc = new TextEncoder();
 async function sig(secret, msg) {
   const k = await crypto.subtle.importKey("raw", enc.encode(secret), {name: "HMAC", hash: "SHA-256"}, false, ["sign"]);
