@@ -58,7 +58,7 @@ const SK = {
   Date: t => t.r.Date,
   Ticker: t => (t.r.Ticker || "").toLowerCase(),
   Strategy: t => (t.r.Strategy || "").toLowerCase(),
-  MC: t => mcv(t.r.MC),
+  "Entry MC": t => mcv(t.r.MC),
   SL: t => (t.c.sl == null ? null : Math.abs(t.c.sl)),
   TP: t => t.c.tp,
   RRR: t => t.c.rrr,
@@ -178,7 +178,7 @@ let editId = null;
 
 function endEdit() {
   editId = null;
-  ["Ticker", "MC", "Price", "Entry Time", "SL", "TP", "RRR", "PnL","Exit MC", "Exit Time", "Tags", "Notes"].forEach(
+  ["Ticker", "MC", "Price", "Entry Time", "SL", "TP", "RRR", "PnL", "Exit Time", "Exit MC", "Tags", "Notes"].forEach(
     k => ($(k).value = "")
   );
   $("Date").valueAsDate = new Date();
@@ -277,34 +277,6 @@ $("tb").onclick = async e => {
     await load();
   } catch (_) {
     say("Delete failed");
-  }
-};
-
-$("impb").onclick = () => $("imp").click();
-
-$("imp").onchange = async e => {
-  const f = e.target.files[0];
-  e.target.value = "";
-  if (!f) return;
-  let n;
-  try {
-    const t = await f.text();
-    n = f.name.toLowerCase().endsWith(".json")
-      ? JSON.parse(t).map(o => (o.trade_date ? fromOld(o) : fromRow(o)))
-      : parseCSV(t).map(fromRow);
-  } catch (_) {
-    return say("Could not read that file");
-  }
-  const key = r => [r.Date, r.Ticker, r["Entry Time"]].join("|");
-  const have = new Set(rows.map(key));
-  n = n.filter(r => r.Date && r.Ticker && !have.has(key(r)));
-  if (!n.length) return say("Nothing new to import");
-  try {
-    await api("POST", { trades: n });
-    await load();
-    say(n.length + " imported ✓");
-  } catch (_) {
-    say("Import failed");
   }
 };
 
