@@ -375,22 +375,17 @@ const PERIODS_HTML = `
     <option value="lyear">Last year</option>
   </optgroup>`;
 
-const periodSels = document.querySelectorAll(".period-sel");
-periodSels.forEach(s => {
-  s.innerHTML = PERIODS_HTML;
-  s.value = period;
-  s.title = "All trades";
-  s.onchange = e => {
-    period = e.target.value;
-    const r = periodRange(period);
-    periodSels.forEach(x => {
-      x.value = period;
-      x.title = r ? r[0] + " → " + r[1] : "All trades";
-    });
-    page = 0;
-    render();
-  };
-});
+const periodSel = $("period");
+periodSel.innerHTML = PERIODS_HTML;
+periodSel.value = period;
+periodSel.title = "All trades";
+periodSel.onchange = e => {
+  period = e.target.value;
+  const r = periodRange(period);
+  periodSel.title = r ? r[0] + " → " + r[1] : "All trades";
+  page = 0;
+  render();
+};
 
 $("reload").onclick = load;
 $("Date").valueAsDate = new Date();
