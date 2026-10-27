@@ -9,3 +9,4 @@ CREATE INDEX IF NOT EXISTS idx_trades_date ON trades(date);
 
 -- PIN login attempt tracking (run this too if you already created the trades table)
 CREATE TABLE IF NOT EXISTS login_attempts(ip TEXT, ts INTEGER);
+ALTER TABLE trades ADD COLUMN exit_mc TEXT;
