@@ -1,1 +1,101 @@
 
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Memecoin Journal</title>
+<style>
+:root{color-scheme:light dark;--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mut:#6b7280;--bd:#d9dde3;--pri:#1f3864;--g:#0a7a3d;--r:#c0262d}
+@media(prefers-color-scheme:dark){:root{--bg:#14171c;--card:#1d2127;--tx:#e8eaed;--mut:#9aa3ae;--bd:#333a44;--pri:#6f93d6;--g:#4cc57f;--r:#ff7b80}}
+*{box-sizing:border-box}body{margin:0;font:14px/1.4 Arial,sans-serif;background:var(--bg);color:var(--tx);padding:16px;max-width:1200px;margin:auto}
+h1{font-size:20px;margin:0 0 12px}h2{font-size:14px;margin:0 0 8px;color:var(--pri)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+label{display:block;font-size:11px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:6px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font:inherit}
+button{padding:7px 12px;border:0;border-radius:5px;background:var(--pri);color:var(--bg);font-weight:bold;cursor:pointer}
+button.sec{background:transparent;color:var(--pri);border:1px solid var(--pri)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.k{background:var(--bg);border-radius:6px;padding:8px;text-align:center}.k b{display:block;font-size:18px}.k span{font-size:11px;color:var(--mut)}
+.w{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:5px 8px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}th{color:var(--mut);position:sticky;top:0;background:var(--card)}
+.g{color:var(--g)}.r{color:var(--r)}#st{font-size:12px;color:var(--mut);margin-left:8px}.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+</style></head><body>
+<h1>Memecoin Trading Journal <span id="st"></span></h1>
+
+
+<div class="card"><h2>Log a trade</h2>
+<div class="grid">
+<div><label>Date</label><input id="Date" type="date"></div>
+<div><label>Ticker</label><input id="Ticker" placeholder="$TICKER"></div>
+<div><label>Strategy</label><input id="Strategy" list="sl"><datalist id="sl"></datalist></div>
+<div><label>MC</label><input id="MC" placeholder="118k"></div>
+<div><label>Price</label><input id="Price"></div>
+<div><label>Entry Time</label><input id="Entry Time" type="time"></div>
+<div><label>SL (%)</label><input id="SL" placeholder="-20"></div>
+<div><label>TP (%)</label><input id="TP" placeholder="100"></div>
+<div><label>RRR (auto)</label><input id="RRR" disabled></div>
+<div><label>PnL (%)</label><input id="PnL" placeholder="-34"></div>
+<div><label>Exit Time</label><input id="Exit Time" type="time"></div>
+<div><label>Review</label><select id="Review"><option>Plan</option><option>Mistake</option></select></div>
+<div style="grid-column:span 2"><label>Tags (comma separated)</label><input id="Tags" placeholder="No FOMO, Patience"></div>
+<div style="grid-column:1/-1"><label>Notes</label><textarea id="Notes" rows="3"></textarea></div>
+</div><p><button id="add">Add trade</button> <button class="sec" id="reload">Reload</button> <button class="sec" id="impb">Import old CSV</button><input id="imp" type="file" accept=".csv" hidden></p></div>
+
+<div class="card"><h2>Stats</h2><div class="kpis" id="kpi"></div></div>
+<div class="two"><div class="card w"><h2>By strategy</h2><table id="t1"></table></div>
+<div class="card w"><h2>By time of day / review</h2><table id="t2"></table></div></div>
+<div class="card w"><h2>Trades</h2><table id="tb"></table></div>
+
+<script>
+const H=["Date","Ticker","Strategy","MC","Price","Entry Time","SL","TP","RRR","PnL","Exit Time","Review","Tags","Notes"],BE=0.01;
+let rows=[];const $=i=>document.getElementById(i),cfg=()=>JSON.parse(localStorage.getItem("cfg")||"{}");
+const say=m=>$("st").textContent=m;
+function parseCSV(t){const o=[];let r=[],f="",q=0;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=0}else f+=c}else if(c=='"')q=1;else if(c==","){r.push(f);f=""}else if(c=="\n"||c=="\r"){if(c=="\r"&&t[i+1]=="\n")i++;r.push(f);o.push(r);r=[];f=""}else f+=c}if(f!==""||r.length){r.push(f);o.push(r)}
+ const h=o.shift()||[];return o.filter(a=>a.some(x=>x.trim())).map(a=>Object.fromEntries(h.map((k,i)=>[k.trim(),a[i]||""])))}
+const esc=v=>/[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
+async function api(m,body,q=""){const r=await fetch("/api/trades"+q,{method:m,headers:{"Content-Type":"application/json"},body:body?JSON.stringify(body):undefined});if(!r.ok)throw new Error(r.status);return r.json()}
+async function load(){say("Loading...");try{rows=await api("GET");say(rows.length+" trades")}catch(e){say("Load failed: "+e.message)}render()}
+const num=s=>{const v=parseFloat(String(s||"").replace("%",""));return isNaN(v)?null:v/100};
+const mins=t=>{const m=/^(\d+):(\d+)/.exec(t||"");return m?+m[1]*60+ +m[2]:null};
+function calc(r){const p=num(r.PnL),sl=num(r.SL),tp=num(r.TP),e=mins(r["Entry Time"]),x=mins(r["Exit Time"]);
+ return{p,sl,tp,res:p==null?null:p>BE?"Win":p<-BE?"Loss":"BE",R:p!=null&&sl?p/Math.abs(sl):null,
+ over:p!=null&&sl!=null?(p<-Math.abs(sl)?p+Math.abs(sl):0):null,rrr:sl&&tp!=null?Math.abs(tp)/Math.abs(sl):null,
+ hold:e!=null&&x!=null?(((x-e)%1440+1440)%1440)/60:null,
+ tod:e==null?"":e<360?"Night (00-06)":e<720?"Morning (06-12)":e<1080?"Afternoon (12-18)":"Evening (18-24)"}}
+const sum=a=>a.reduce((x,y)=>x+y,0),avg=a=>a.length?sum(a)/a.length:0,pc=(v,d=1)=>(v*100).toFixed(d)+"%",cl=v=>v>0?"g":v<0?"r":"";
+function group(list,key){const m={};list.forEach(t=>{const k=t.r[key]||"-";(m[k]=m[k]||[]).push(t.c)});
+ return Object.entries(m).map(([k,a])=>{const w=a.filter(c=>c.res=="Win").length,s=sum(a.map(c=>c.p));
+ return`<tr><td>${esc2(k)}</td><td>${a.length}</td><td>${pc(w/a.length,0)}</td><td class="${cl(s)}">${pc(s)}</td><td>${avg(a.filter(c=>c.R!=null).map(c=>c.R)).toFixed(2)}R</td></tr>`}).join("")}
+const esc2=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const hdr=n=>`<tr><th>${n}</th><th>Trades</th><th>Win %</th><th>PnL</th><th>Avg R</th></tr>`;
+function render(){const all=rows.map(r=>({r,c:calc(r)})),cl_=all.filter(t=>t.c.p!=null),C=cl_.map(t=>t.c);
+ const w=C.filter(c=>c.res=="Win"),l=C.filter(c=>c.res=="Loss"),tot=sum(C.map(c=>c.p)),gw=sum(w.map(c=>c.p)),gl=Math.abs(sum(l.map(c=>c.p))),
+ ov=sum(C.map(c=>c.over||0)),rr=avg(C.filter(c=>c.rrr!=null).map(c=>c.rrr));
+ const K=[["Trades",C.length],["Win rate",C.length?pc(w.length/C.length):"-"],["Total PnL",`<i class="${cl(tot)}">${pc(tot)}</i>`],
+ ["Profit factor",gl?(gw/gl).toFixed(2):"-"],["Avg R / trade",avg(C.filter(c=>c.R!=null).map(c=>c.R)).toFixed(2)+"R"],
+ ["Avg planned RRR","1:"+rr.toFixed(1)],["Break-even win rate",rr?pc(1/(1+rr)):"-"],
+ ["Extra loss past SL",`<i class="${cl(ov)}">${pc(ov)}</i>`],["PnL if SLs filled exactly",pc(tot-ov)],
+ ["Avg hold winners",avg(w.filter(c=>c.hold!=null).map(c=>c.hold)).toFixed(1)+"h"],["Avg hold losers",avg(l.filter(c=>c.hold!=null).map(c=>c.hold)).toFixed(1)+"h"]];
+ $("kpi").innerHTML=K.map(([a,b])=>`<div class="k"><b>${b}</b><span>${a}</span></div>`).join("");
+ $("t1").innerHTML=hdr("Strategy")+group(cl_,"Strategy");
+ const tt=cl_.map(t=>({r:{...t.r,tod:t.c.tod},c:t.c}));
+ $("t2").innerHTML=hdr("Time of day")+group(tt,"tod")+hdr("Review")+group(cl_,"Review");
+ $("sl").innerHTML=[...new Set(rows.map(r=>r.Strategy).filter(Boolean))].map(s=>`<option value="${s.replace(/"/g,"&quot;")}">`).join("");
+ const cols=["Date","Ticker","Strategy","MC","SL","TP","RRR","PnL"];
+ $("tb").innerHTML=`<tr>${cols.map(c=>`<th>${c}</th>`).join("")}<th>Result</th><th>R</th><th>Overshoot</th><th>Hold</th><th>Time of day</th><th>Review</th><th>Tags</th><th></th></tr>`+
+ all.map((t,i)=>({t,i})).reverse().map(({t,i})=>{const c=t.c;return`<tr title="${esc2((t.r.Notes||"").slice(0,400)).replace(/"/g,"&quot;")}">${cols.map(k=>`<td>${esc2(t.r[k]||"")}</td>`).join("")}
+ <td class="${c.res=="Win"?"g":c.res=="Loss"?"r":""}">${c.res||""}</td><td>${c.R==null?"":c.R.toFixed(2)+"R"}</td><td class="${cl(c.over)}">${c.over?pc(c.over):""}</td>
+ <td>${c.hold==null?"":c.hold.toFixed(1)+"h"}</td><td>${c.tod}</td><td>${esc2(t.r.Review||"")}</td><td>${esc2(t.r.Tags||"")}</td><td><a href="#" data-i="${i}" class="del">✕</a></td></tr>`}).join("")}
+const pf=s=>{const v=parseFloat(String(s).replace("%",""));return isNaN(v)?"":v+"%"};
+["SL","TP"].forEach(k=>$(k).oninput=()=>{const s=num($("SL").value),t=num($("TP").value);$("RRR").value=s&&t!=null?"1:"+(Math.abs(t)/Math.abs(s)).toFixed(1):""});
+$("add").onclick=async()=>{const r={};H.forEach(k=>{const e=$(k);r[k]=e?e.value.trim():""});
+ ["SL","TP","PnL"].forEach(k=>r[k]=pf(r[k]));r.Ticker=r.Ticker&&!r.Ticker.startsWith("$")?"$"+r.Ticker:r.Ticker;
+ if(!r.Date||!r.Ticker)return say("Date and Ticker are required");
+ const c=calc(r);r.RRR=c.rrr!=null?"1:"+c.rrr.toFixed(1):"";
+ try{await api("POST",{trades:[r]});["Ticker","MC","Price","Entry Time","SL","TP","RRR","PnL","Exit Time","Tags","Notes"].forEach(k=>$(k).value="");await load();say("Saved ✓")}catch(e){say("Save failed: "+e.message)}};
+$("tb").onclick=async e=>{if(!e.target.classList.contains("del"))return;e.preventDefault();const x=rows[+e.target.dataset.i];
+ if(!confirm("Delete "+x.Ticker+"?"))return;try{await api("DELETE",null,"?id="+x.id);await load()}catch(_){say("Delete failed")}};
+$("impb").onclick=()=>$("imp").click();
+$("imp").onchange=async e=>{const f=e.target.files[0];if(!f)return;const n=parseCSV(await f.text());try{await api("POST",{trades:n});await load();say(n.length+" imported ✓")}catch(_){say("Import failed")}};
+$("reload").onclick=load;
+$("Date").valueAsDate=new Date();load();
+</script></body></html>
