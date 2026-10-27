@@ -52,11 +52,6 @@ h1 {
 }
 
 h2 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
   font-size: 16px;
   margin: 0 0 12px;
   color: var(--pri);
@@ -65,27 +60,43 @@ h2 {
   letter-spacing: 0.03em;
 }
 
-h2 .period-sel {
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--tx);
-  padding: 5px 8px;
-  border: 1px solid var(--bd);
-  border-radius: 6px;
-  background: var(--bg);
-  min-height: 0;
-  width: auto;
-  max-width: 180px;
-  cursor: pointer;
+/* Top bar with global period selector */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
 }
 
-h2 .period-sel:focus {
-  outline: none;
-  border-color: var(--pri);
-  box-shadow: 0 0 0 2px rgba(31, 56, 100, 0.15);
+.topbar h1 {
+  margin: 0;
+}
+
+.topbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.topbar-controls label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mut);
+  margin: 0;
+}
+
+.period-sel {
+  width: auto;
+  min-height: 42px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
 }
 
 /* Card Container */
@@ -218,14 +229,14 @@ button:disabled {
 
 .k b {
   display: block;
-  font-size: 20px; 
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
 
 .k span {
-  font-size: 12px; 
+  font-size: 12px;
   color: var(--mut);
   margin-top: 4px;
   display: block;
@@ -265,7 +276,7 @@ th {
   top: 0;
   background: var(--card);
   font-weight: 600;
-  font-size: 12px; 
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   z-index: 1;
@@ -348,6 +359,14 @@ th.srt:hover {
     font-size: 1.25rem;
   }
 
+  .topbar-controls {
+    width: 100%;
+  }
+
+  .period-sel {
+    flex: 1 1 auto;
+  }
+
   .card {
     padding: 12px;
     margin-bottom: 12px;
@@ -372,7 +391,7 @@ th.srt:hover {
   }
 
   table {
-    font-size: 13px; 
+    font-size: 13px;
   }
 
   th,
