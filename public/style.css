@@ -247,16 +247,16 @@ tbody tr:hover {
   background-color: rgba(128, 128, 128, 0.04);
 }
 
-/* Main Trade Table (#tb) Numerical Alignment */
-#tb th:nth-child(4), #tb td:nth-child(4), /* MC */
-#tb th:nth-child(5), #tb td:nth-child(5), /* SL */
-#tb th:nth-child(6), #tb td:nth-child(6), /* TP */
-#tb th:nth-child(7), #tb td:nth-child(7), /* RRR */
-#tb th:nth-child(8), #tb td:nth-child(8), /* PnL */
-#tb th:nth-child(9), #tb td:nth-child(9), /* Result */
-#tb th:nth-child(10), #tb td:nth-child(10), /* R */
-#tb th:nth-child(11), #tb td:nth-child(11), /* SL-exceed */
-#tb th:nth-child(12), #tb td:nth-child(12)  /* Hold */ {
+#tb th:nth-child(4),  #tb td:nth-child(4),  /* MC */
+#tb th:nth-child(5),  #tb td:nth-child(5),  /* SL */
+#tb th:nth-child(6),  #tb td:nth-child(6),  /* TP */
+#tb th:nth-child(7),  #tb td:nth-child(7),  /* RRR */
+#tb th:nth-child(8),  #tb td:nth-child(8),  /* PnL */
+#tb th:nth-child(9),  #tb td:nth-child(9),  /* Exit MC */
+#tb th:nth-child(10), #tb td:nth-child(10), /* Result */
+#tb th:nth-child(11), #tb td:nth-child(11), /* R */
+#tb th:nth-child(12), #tb td:nth-child(12), /* SL-excess */
+#tb th:nth-child(13), #tb td:nth-child(13)  /* Hold */ {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
