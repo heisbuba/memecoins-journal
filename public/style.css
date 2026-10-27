@@ -243,6 +243,13 @@ button:disabled {
   font-weight: 500;
 }
 
+#lk {
+  gap: 6px;
+}
+
+#lk svg {
+  flex-shrink: 0;
+}
 /* Two-column layout */
 .two {
   display: grid;
