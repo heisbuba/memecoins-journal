@@ -16,10 +16,14 @@
     </div>
   </div>
 
-  <h1>
-    Memes Journal <span id="st"></span>
-    <button class="sec" id="lk" style="float:right">Lock</button>
-  </h1>
+  <header class="topbar">
+    <h1>Memes Journal <span id="st"></span></h1>
+    <div class="topbar-controls">
+      <label for="period">Period</label>
+      <select id="period" class="period-sel" aria-label="Period filter"></select>
+      <button class="sec" id="lk">Lock</button>
+    </div>
+  </header>
 
   <div class="card">
     <h2>Log a trade</h2>
@@ -34,7 +38,7 @@
       <div><label>TP (%)</label><input id="TP" placeholder="100"></div>
       <div><label>RRR (auto)</label><input id="RRR" disabled></div>
       <div><label>PnL (%)</label><input id="PnL" placeholder="-34"></div>
-      <div><label>Exit MC</label><input id="Exit MC" placeholder="450k"></div> 
+      <div><label>Exit MC</label><input id="Exit MC" placeholder="450k"></div>
       <div><label>Exit Time</label><input id="Exit Time" type="time"></div>
       <div>
         <label>Review</label>
@@ -47,52 +51,52 @@
       <div style="grid-column:span 2"><label>Review Tags</label><input id="Tags" placeholder="No FOMO, Patience"></div>
       <div style="grid-column:1/-1"><label>Notes</label><textarea id="Notes" rows="3"></textarea></div>
     </div>
-   <p>
-  <button id="add">Add trade</button>
-  <button class="sec" id="reload">Reload</button>
-  <button class="sec" id="exc" title="Download CSV" aria-label="Download CSV">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle">
-      <path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/>
-    </svg>
-  </button>
-  <button class="sec" id="cancel" style="display:none">Cancel edit</button>
-</p>
+    <p>
+      <button id="add">Add trade</button>
+      <button class="sec" id="reload">Reload</button>
+      <button class="sec" id="exc" title="Download CSV" aria-label="Download CSV">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle">
+          <path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/>
+        </svg>
+      </button>
+      <button class="sec" id="cancel" style="display:none">Cancel edit</button>
+    </p>
   </div>
- 
-<div class="card">
-  <h2><span>Trades Stats</span></h2>
-  <div class="kpis" id="kpi"></div>
-</div>
 
-<div class="two">
-  <div class="card w">
-    <h2><span>By Strategy</span><select class="period-sel" aria-label="Period"></select></h2>
-    <table id="t1"></table>
+  <div class="card">
+    <h2>Trades Stats</h2>
+    <div class="kpis" id="kpi"></div>
   </div>
-  <div class="card w">
-    <h2><span>By Entry Time</span><select class="period-sel" aria-label="Period"></select></h2>
-    <table id="t2"></table>
-  </div>
-</div>
 
-<div class="card w">
-  <h2><span>Trades</span><select class="period-sel" aria-label="Period"></select></h2>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-    <input id="q" placeholder="Search ticker, strategy, tags, notes, result..." style="flex:1;min-width:200px">
-    <select id="ps" style="width:auto">
-      <option value="10">10 / page</option>
-      <option value="20" selected>20 / page</option>
-      <option value="50">50 / page</option>
-      <option value="100">100 / page</option>
-    </select>
+  <div class="two">
+    <div class="card w">
+      <h2>By Strategy</h2>
+      <table id="t1"></table>
+    </div>
+    <div class="card w">
+      <h2>By Entry Time</h2>
+      <table id="t2"></table>
+    </div>
   </div>
-  <table id="tb"></table>
-  <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-    <button class="sec" id="prev">‹ Prev</button>
-    <span id="pi" style="font-size:12px;color:var(--mut)"></span>
-    <button class="sec" id="next">Next ›</button>
+
+  <div class="card w">
+    <h2>Trades</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <input id="q" placeholder="Search ticker, strategy, tags, notes, result..." style="flex:1;min-width:200px">
+      <select id="ps" style="width:auto">
+        <option value="10">10 / page</option>
+        <option value="20" selected>20 / page</option>
+        <option value="50">50 / page</option>
+        <option value="100">100 / page</option>
+      </select>
+    </div>
+    <table id="tb"></table>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <button class="sec" id="prev">‹ Prev</button>
+      <span id="pi" style="font-size:12px;color:var(--mut)"></span>
+      <button class="sec" id="next">Next ›</button>
+    </div>
   </div>
-</div>
 
   <script src="calc.js"></script>
   <script src="app.js"></script>
