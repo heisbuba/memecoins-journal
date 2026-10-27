@@ -52,13 +52,13 @@ const hdr = n =>
   `<tr><th>${n}</th><th>Trades</th><th>Win %</th><th>PnL</th><th>Avg R</th></tr>`;
 
 const SEARCH = ["Ticker", "Strategy", "Tags", "Notes", "Review"];
-let qt, q = "", sortK = "Date", sortD = -1, page = 0, PS = 20;
+let qt, q = "", sortK = "Date", sortD = -1, page = 0, PS = 20, period = "all";
 
 const SK = {
   Date: t => t.r.Date,
   Ticker: t => (t.r.Ticker || "").toLowerCase(),
   Strategy: t => (t.r.Strategy || "").toLowerCase(),
-  "Entry MC": t => mcv(t.r.MC),
+  MC: t => mcv(t.r.MC),
   SL: t => (t.c.sl == null ? null : Math.abs(t.c.sl)),
   TP: t => t.c.tp,
   RRR: t => t.c.rrr,
@@ -73,8 +73,37 @@ const SK = {
   Tags: t => (t.r.Tags || "").toLowerCase() || null
 };
 
+// calendar-window boundaries for the period selector; returns [fromISO, toISO] or null
+function periodRange(p) {
+  if (p === "all") return null;
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  const dow = (now.getDay() + 6) % 7;             // Mon=0
+  const iso = dt => dt.toISOString().slice(0, 10);
+  const D = (yy, mm, dd) => new Date(Date.UTC(yy, mm, dd));
+  switch (p) {
+    case "week":     return [iso(D(y, m, d - dow)),     iso(D(y, m, d - dow + 6))];
+    case "month":    return [iso(D(y, m, 1)),           iso(D(y, m + 1, 0))];
+    case "quarter":  { const k = Math.floor(m / 3);
+                       return [iso(D(y, k * 3, 1)),     iso(D(y, k * 3 + 3, 0))]; }
+    case "year":     return [iso(D(y, 0, 1)),           iso(D(y, 11, 31))];
+    case "lweek":    return [iso(D(y, m, d - dow - 7)), iso(D(y, m, d - dow - 1))];
+    case "lmonth":   return [iso(D(y, m - 1, 1)),       iso(D(y, m, 0))];
+    case "lquarter": { const k = Math.floor(m / 3) - 1;
+                       return [iso(D(y, k * 3, 1)),     iso(D(y, k * 3 + 3, 0))]; }
+    case "lyear":    return [iso(D(y - 1, 0, 1)),       iso(D(y - 1, 11, 31))];
+  }
+  return null;
+}
+
 function render() {
-  const all = rows.map(r => ({ r, c: calc(r) }));
+  const range = periodRange(period);
+  const allIdx = rows.map((r, i) => ({ r, i, c: calc(r) }));
+  const all = range
+    ? allIdx.filter(t => t.r.Date && t.r.Date >= range[0] && t.r.Date <= range[1])
+    : allIdx;
   const cl_ = all.filter(t => t.c.p != null);
   const C = cl_.map(t => t.c);
 
@@ -83,7 +112,6 @@ function render() {
   const tot = sum(C.map(c => c.p));
   const gw = sum(w.map(c => c.p));
   const gl = Math.abs(sum(l.map(c => c.p)));
-  const ov = sum(C.map(c => c.over || 0));
   const rr = avg(C.filter(c => c.rrr != null).map(c => c.rrr));
 
   const K = [
@@ -110,16 +138,16 @@ function render() {
   const cols = ["Date", "Ticker", "Strategy", "MC", "SL", "TP", "RRR", "PnL", "Exit MC"];
   const ths = [...cols, "Result", "R", "SL-excess", "Hold", "Time of day", "Review", "Tags"];
 
-  let v = all.map((t, i) => ({ t, i }));
+  let v = all.slice();
   if (q) {
-    v = v.filter(({ t }) =>
-      (SEARCH.map(k => t.r[k] || "").join(" ") + " " + (t.c.res || "")).toLowerCase().includes(q)
+    v = v.filter(({ r, c }) =>
+      (SEARCH.map(k => r[k] || "").join(" ") + " " + (c.res || "")).toLowerCase().includes(q)
     );
   }
 
   const g = SK[sortK] || SK.Date;
   v.sort((a, b) => {
-    const x = g(a.t), y = g(b.t);
+    const x = g(a), y = g(b);
     if (x == null && y == null) return 0;
     if (x == null) return 1;
     if (y == null) return -1;
@@ -147,18 +175,17 @@ function render() {
       `<th class="srt" data-k="${k}" style="cursor:pointer">${k}${sortK == k ? (sortD > 0 ? " ▲" : " ▼") : ""}</th>`
     ).join("")}<th></th></tr>` +
     vis
-      .map(({ t, i }) => {
-        const c = t.c;
+      .map(({ r, i, c }) => {
         return (
-          `<tr title="${esc2((t.r.Notes || "").slice(0, 400)).replace(/"/g, "&quot;")}">` +
-          cols.map(k => `<td>${esc2(t.r[k] || "")}</td>`).join("") +
+          `<tr title="${esc2((r.Notes || "").slice(0, 400)).replace(/"/g, "&quot;")}">` +
+          cols.map(k => `<td>${esc2(r[k] || "")}</td>`).join("") +
           `<td class="${c.res == "Win" ? "g" : c.res == "Loss" ? "r" : ""}">${c.res || ""}</td>` +
           `<td>${c.R == null ? "" : c.R.toFixed(2) + "R"}</td>` +
           `<td class="${cl(c.over)}">${c.over ? pc(c.over) : ""}</td>` +
           `<td>${c.hold == null ? "" : c.hold.toFixed(1) + "h"}</td>` +
           `<td>${c.tod}</td>` +
-          `<td>${esc2(t.r.Review || "")}</td>` +
-          `<td>${esc2(t.r.Tags || "")}</td>` +
+          `<td>${esc2(r.Review || "")}</td>` +
+          `<td>${esc2(r.Tags || "")}</td>` +
           `<td><a href="#" data-i="${i}" class="ed" title="Edit">✎</a> ` +
           `<a href="#" data-i="${i}" class="del" title="Delete">✕</a></td></tr>`
         );
@@ -332,6 +359,38 @@ $("lk").onclick = async () => {
   say("");
   $("lock").style.display = "grid";
 };
+
+const PERIODS_HTML = `
+  <option value="all">All time</option>
+  <optgroup label="Current">
+    <option value="week">This week</option>
+    <option value="month">This month</option>
+    <option value="quarter">This quarter</option>
+    <option value="year">This year</option>
+  </optgroup>
+  <optgroup label="Previous">
+    <option value="lweek">Last week</option>
+    <option value="lmonth">Last month</option>
+    <option value="lquarter">Last quarter</option>
+    <option value="lyear">Last year</option>
+  </optgroup>`;
+
+const periodSels = document.querySelectorAll(".period-sel");
+periodSels.forEach(s => {
+  s.innerHTML = PERIODS_HTML;
+  s.value = period;
+  s.title = "All trades";
+  s.onchange = e => {
+    period = e.target.value;
+    const r = periodRange(period);
+    periodSels.forEach(x => {
+      x.value = period;
+      x.title = r ? r[0] + " → " + r[1] : "All trades";
+    });
+    page = 0;
+    render();
+  };
+});
 
 $("reload").onclick = load;
 $("Date").valueAsDate = new Date();
