@@ -2,12 +2,19 @@ let rows = [];
 const $ = i => document.getElementById(i);
 const say = m => ($("st").textContent = m);
 
+const OFFLINE = "You're offline. Trades need a connection.";
+
 async function api(m, body, q = "") {
-  const r = await fetch("/api/trades" + q, {
-    method: m,
-    headers: { "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined
-  });
+  let r;
+  try {
+    r = await fetch("/api/trades" + q, {
+      method: m,
+      headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined
+    });
+  } catch (_) {
+    throw new Error("offline");
+  }
   if (r.status == 401) {
     $("app").style.display = "none";    // Hide app
     $("lock").style.display = "grid";   // Show lock
@@ -26,7 +33,13 @@ async function load() {
     $("lock").style.display = "none";   // Hide lock
     $("app").style.display = "block";   // Show app
   } catch (e) {
-    say(e.message == "locked" ? "" : "Load failed: " + e.message);
+    if (e.message == "offline") {
+      if ($("app").style.display == "block") say(OFFLINE);
+      else {
+        $("lock").style.display = "grid";
+        $("le").textContent = OFFLINE;
+      }
+    } else say(e.message == "locked" ? "" : "Load failed: " + e.message);
   }
   render();
 }
@@ -393,3 +406,13 @@ periodSel.onchange = e => {
 $("reload").onclick = load;
 $("Date").valueAsDate = new Date();
 load();
+
+window.addEventListener("online", () => {
+  $("le").textContent = "";
+  load();
+});
+window.addEventListener("offline", () => say(OFFLINE));
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
+}

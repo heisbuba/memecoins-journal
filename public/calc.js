@@ -1,5 +1,5 @@
 const H = [
-  "Date", "Ticker", "Strategy", "Entry MC", "Price", "Entry Time",
+  "Date", "Ticker", "Strategy", "MC", "Price", "Entry Time",
   "SL", "TP", "RRR", "PnL", "Exit MC",  "Exit Time", "Review", "Tags", "Notes"
 ];
 const BE = 0.01;
@@ -68,10 +68,14 @@ function finalize(r) {
 // average that shows "-" instead of a fake 0 when there is no data
 const fmtAvg = (a, f) => (a.length ? f(avg(a)) : "-");
 
+// market cap text ("118k", "1.2m", "3bn", "1.5 trillion") to a number
+const MC_UNITS = { k: 1e3, m: 1e6, b: 1e9, t: 1e12 };
 const mcv = s => {
-  const m = /^\$?\s*([\d.,]+)\s*([kmb])?$/i.exec(String(s || "").trim());
+  const m = /^\$?\s*([\d.,]+)\s*(k|m(?:m|il|illion)?|b(?:n|il|illion)?|t(?:n|ril|rillion)?)?$/i.exec(
+    String(s || "").trim()
+  );
   return m
-    ? parseFloat(m[1].replace(/,/g, "")) * ({ k: 1e3, m: 1e6, b: 1e9 }[(m[2] || "").toLowerCase()] || 1)
+    ? parseFloat(m[1].replace(/,/g, "")) * (MC_UNITS[(m[2] || "").charAt(0).toLowerCase()] || 1)
     : null;
 };
 
