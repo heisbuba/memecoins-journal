@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <rect width="512" height="512" rx="96" fill="#1f3864"/>
-<rect x="133" y="256" width="14" height="140" rx="7" fill="#ff7b80"/>
-<rect x="111" y="296" width="58" height="70" rx="12" fill="#ff7b80"/>
-<rect x="249" y="186" width="14" height="160" rx="7" fill="#4cc57f"/>
-<rect x="227" y="226" width="58" height="90" rx="12" fill="#4cc57f"/>
-<rect x="365" y="116" width="14" height="180" rx="7" fill="#4cc57f"/>
-<rect x="343" y="156" width="58" height="110" rx="12" fill="#4cc57f"/>
+<rect x="136" y="96" width="240" height="320" rx="28" fill="#f6f7f9"/>
+<rect x="136" y="96" width="44" height="320" rx="28" fill="#6f93d6"/>
+<rect x="156" y="96" width="24" height="320" fill="#6f93d6"/>
+<rect x="216" y="236" width="120" height="14" rx="7" fill="#b9c3d6"/>
+<rect x="216" y="292" width="120" height="14" rx="7" fill="#b9c3d6"/>
+<rect x="216" y="348" width="76" height="14" rx="7" fill="#b9c3d6"/>
+<polygon points="316,96 356,96 356,200 336,176 316,200" fill="#4cc57f"/>
 </svg>
