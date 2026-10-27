@@ -9,7 +9,8 @@ async function api(m, body, q = "") {
     body: body ? JSON.stringify(body) : undefined
   });
   if (r.status == 401) {
-    $("lock").style.display = "grid";
+    $("app").style.display = "none";    // Hide app
+    $("lock").style.display = "grid";   // Show lock
     $("pin").focus();
     throw new Error("locked");
   }
@@ -22,7 +23,8 @@ async function load() {
   try {
     rows = await api("GET");
     say(rows.length + " trades");
-    $("lock").style.display = "none";
+    $("lock").style.display = "none";   // Hide lock
+    $("app").style.display = "block";   // Show app
   } catch (e) {
     say(e.message == "locked" ? "" : "Load failed: " + e.message);
   }
@@ -357,7 +359,8 @@ $("lk").onclick = async () => {
   rows = [];
   render();
   say("");
-  $("lock").style.display = "grid";
+  $("app").style.display = "none";    // Hide app
+  $("lock").style.display = "grid";   // Show lock
 };
 
 const PERIODS_HTML = `
