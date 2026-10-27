@@ -63,6 +63,7 @@ const SK = {
   TP: t => t.c.tp,
   RRR: t => t.c.rrr,
   PnL: t => t.c.p,
+  "Exit MC": t => mcv(t.r["Exit MC"]),
   Result: t => t.c.res,
   R: t => t.c.R,
   Overshoot: t => t.c.over,
@@ -106,7 +107,7 @@ function render() {
     .map(s => `<option value="${s.replace(/"/g, "&quot;")}">`)
     .join("");
 
-  const cols = ["Date", "Ticker", "Strategy", "MC", "SL", "TP", "RRR", "PnL"];
+  const cols = ["Date", "Ticker", "Strategy", "MC", "SL", "TP", "RRR", "PnL", "Exit MC"];
   const ths = [...cols, "Result", "R", "SL-excess", "Hold", "Time of day", "Review", "Tags"];
 
   let v = all.map((t, i) => ({ t, i }));
@@ -177,7 +178,7 @@ let editId = null;
 
 function endEdit() {
   editId = null;
-  ["Ticker", "MC", "Price", "Entry Time", "SL", "TP", "RRR", "PnL", "Exit Time", "Tags", "Notes"].forEach(
+  ["Ticker", "MC", "Price", "Entry Time", "SL", "TP", "RRR", "PnL","Exit MC", "Exit Time", "Tags", "Notes"].forEach(
     k => ($(k).value = "")
   );
   $("Date").valueAsDate = new Date();
