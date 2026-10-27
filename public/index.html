@@ -5,9 +5,9 @@
 <link rel="stylesheet" href="style.css">
 </head><body>
 <div id="lock" style="position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:9"><div class="card" style="width:280px"><h2>Enter PIN</h2><input id="pin" type="password" autocomplete="current-password"><p><button id="unlock">Unlock</button> <span id="le" class="r"></span></p></div></div>
-<h1>Memes Journal <span id="st"></span> <button class="sec" id="lk" style="float:right">Lock</button></h1>
-
-
+<h1>Memes Journal <span id="st"></span>
+  <button class="sec" id="lk" style="float:right">Lock</button>
+</h1>
 <div class="card"><h2>Log a trade</h2>
 <div class="grid">
 <div><label>Date</label><input id="Date" type="date"></div>
@@ -21,8 +21,8 @@
 <div><label>RRR (auto)</label><input id="RRR" disabled></div>
 <div><label>PnL (%)</label><input id="PnL" placeholder="-34"></div>
 <div><label>Exit Time</label><input id="Exit Time" type="time"></div>
-<div><label>Review</label><select id="Review"><option>Plan</option><option>Mistake</option></select></div>
-<div style="grid-column:span 2"><label>Tags (comma separated)</label><input id="Tags" placeholder="No FOMO, Patience"></div>
+<div><label>Review</label><select id="Review"><option>Plan</option><option>Mistake</option><option>Unplanned</option></select></div>
+<div style="grid-column:span 2"><label>Review Tags</label><input id="Tags" placeholder="No FOMO, Patience"></div>
 <div style="grid-column:1/-1"><label>Notes</label><textarea id="Notes" rows="3"></textarea></div>
 </div><p><button id="add">Add trade</button> <button class="sec" id="reload">Reload</button> <button class="sec" id="impb">Import CSV / JSON</button> <button class="sec" id="exc" title="Download CSV" aria-label="Download CSV"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg></button> <button class="sec" id="cancel" style="display:none">Cancel edit</button><input id="imp" type="file" accept=".csv,.json" hidden></p></div>
 
