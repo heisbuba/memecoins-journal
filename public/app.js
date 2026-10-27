@@ -107,7 +107,7 @@ function render() {
     .map(s => `<option value="${s.replace(/"/g, "&quot;")}">`)
     .join("");
 
-  const cols = ["Date", "Ticker", "Strategy", "MC", "SL", "TP", "RRR", "PnL", "Exit MC"];
+  const cols = ["Date", "Ticker", "Strategy", "Entry MC", "SL", "TP", "RRR", "PnL", "Exit MC"];
   const ths = [...cols, "Result", "R", "SL-excess", "Hold", "Time of day", "Review", "Tags"];
 
   let v = all.map((t, i) => ({ t, i }));
