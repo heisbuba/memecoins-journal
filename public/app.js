@@ -107,7 +107,7 @@ function render() {
     .join("");
 
   const cols = ["Date", "Ticker", "Strategy", "MC", "SL", "TP", "RRR", "PnL"];
-  const ths = [...cols, "Result", "R", "Overshoot", "Hold", "Time of day", "Review", "Tags"];
+  const ths = [...cols, "Result", "R", "SL-excess", "Hold", "Time of day", "Review", "Tags"];
 
   let v = all.map((t, i) => ({ t, i }));
   if (q) {
