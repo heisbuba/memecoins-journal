@@ -11,6 +11,7 @@ const M = {
   RRR: "rrr",
   PnL: "pnl",
   "Exit Time": "exit_time",
+  "Exit MC": "exit_mc",
   Review: "review",
   Tags: "tags",
   Notes: "notes"
