@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Memecoins Trading Journal</title>
+<title>Memecoin Journal</title>
 <style>
 :root{color-scheme:light dark;--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mut:#6b7280;--bd:#d9dde3;--pri:#1f3864;--g:#0a7a3d;--r:#c0262d}
 @media(prefers-color-scheme:dark){:root{--bg:#14171c;--card:#1d2127;--tx:#e8eaed;--mut:#9aa3ae;--bd:#333a44;--pri:#6f93d6;--g:#4cc57f;--r:#ff7b80}}
@@ -20,7 +20,8 @@ button.sec{background:transparent;color:var(--pri);border:1px solid var(--pri)}
 </style></head><body>
 <div id="lock" style="position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:9"><div class="card" style="width:280px"><h2>Enter PIN</h2><input id="pin" type="password" autocomplete="current-password"><p><button id="unlock">Unlock</button> <span id="le" class="r"></span></p></div></div>
 <h1>Memecoin Trading Journal <span id="st"></span> <button class="sec" id="lk" style="float:right">Lock</button></h1>
- 
+
+
 <div class="card"><h2>Log a trade</h2>
 <div class="grid">
 <div><label>Date</label><input id="Date" type="date"></div>
@@ -31,7 +32,7 @@ button.sec{background:transparent;color:var(--pri);border:1px solid var(--pri)}
 <div><label>Entry Time</label><input id="Entry Time" type="time"></div>
 <div><label>SL (%)</label><input id="SL" placeholder="-20"></div>
 <div><label>TP (%)</label><input id="TP" placeholder="100"></div>
-<div><label>RRR</label><input id="RRR" disabled></div>
+<div><label>RRR (auto)</label><input id="RRR" disabled></div>
 <div><label>PnL (%)</label><input id="PnL" placeholder="-34"></div>
 <div><label>Exit Time</label><input id="Exit Time" type="time"></div>
 <div><label>Review</label><select id="Review"><option>Plan</option><option>Mistake</option></select></div>
@@ -108,7 +109,9 @@ function dl(name,text,type){const a=document.createElement("a");a.href=URL.creat
 const stamp=()=>new Date().toISOString().slice(0,10);
 $("exj").onclick=()=>dl("trades-"+stamp()+".json",JSON.stringify(rows.map(r=>Object.fromEntries(H.map(k=>[k,r[k]||""]))),null,2),"application/json");
 $("exc").onclick=()=>dl("trades-"+stamp()+".csv",[H.join(",")].concat(rows.map(r=>H.map(k=>esc(r[k]||"")).join(","))).join("\n")+"\n","text/csv");
-$("unlock").onclick=async()=>{$("le").textContent="";const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pin:$("pin").value})});if(r.ok){$("pin").value="";load()}else{$("le").textContent=(await r.json()).error||"Failed"}};
+$("unlock").onclick=async()=>{const le=$("le");le.textContent="";try{const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pin:$("pin").value})});
+ if(r.ok){$("pin").value="";load();return}let m="";try{m=(await r.json()).error||""}catch(_){}
+ le.textContent=m||("Server error "+r.status+" - check D1 tables, DB binding and secrets")}catch(e){le.textContent="Network error"}};
 $("pin").onkeydown=e=>{if(e.key=="Enter")$("unlock").click()};
 $("lk").onclick=async()=>{await fetch("/api/login",{method:"DELETE"});rows=[];render();say("");$("lock").style.display="grid"};
 $("reload").onclick=load;
