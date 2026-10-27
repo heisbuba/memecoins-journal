@@ -1,4 +1,4 @@
-// Cloudflare Pages Function: /api/trades  (needs a D1 binding named DB)
+// Cloudflare Pages Function: /api/trades 
 const M = {Date:"date",Ticker:"ticker",Strategy:"strategy",MC:"mc",Price:"price","Entry Time":"entry_time",SL:"sl",TP:"tp",RRR:"rrr",PnL:"pnl","Exit Time":"exit_time",Review:"review",Tags:"tags",Notes:"notes"};
 const J = (o, s = 200) => new Response(JSON.stringify(o), {status: s, headers: {"Content-Type": "application/json", "Cache-Control": "no-store"}});
 
@@ -22,4 +22,15 @@ export async function onRequestDelete({env, request}) {
   if (!id) return J({error: "id required"}, 400);
   await env.DB.prepare("DELETE FROM trades WHERE id=?").bind(id).run();
   return J({deleted: id});
+}
+
+export async function onRequestPut({env, request}) {
+  const id = +new URL(request.url).searchParams.get("id");
+  let b; try { b = await request.json(); } catch { return J({error: "bad json"}, 400); }
+  const t = b.trade;
+  if (!id || !t || !t.Date || !t.Ticker) return J({error: "id and trade required"}, 400);
+  const keys = Object.keys(M);
+  await env.DB.prepare(`UPDATE trades SET ${keys.map(k => M[k] + "=?").join(",")} WHERE id=?`)
+    .bind(...keys.map(k => String(t[k] ?? "").slice(0, 20000)), id).run();
+  return J({updated: id});
 }
