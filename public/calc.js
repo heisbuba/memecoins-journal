@@ -1,6 +1,6 @@
 const H = [
   "Date", "Ticker", "Strategy", "MC", "Price", "Entry Time",
-  "SL", "TP", "RRR", "PnL", "Exit Time", "Review", "Tags", "Notes"
+  "SL", "TP", "RRR", "PnL", "Exit Time", "Exit MC", "Review", "Tags", "Notes"
 ];
 const BE = 0.01;
 
@@ -137,6 +137,7 @@ function fromOld(o) {
     RRR: "",
     PnL: pf(o.pnl || ""),
     "Exit Time": o.exit_time || "",
+    "Exit MC": o.exit_mcap || "",
     Review: o.rules_followed ? "Plan" : "Mistake",
     Tags: Array.isArray(o.tags) ? o.tags.join(", ") : (o.tags || ""),
     Notes: o.notes || ""
