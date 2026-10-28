@@ -13,48 +13,48 @@ const SHELL = [
 ];
 const SLOW_MS = 4000;
 
-self.addEventListener("install", e => {
-  e.waitUntil(
+self.addEventListener("install", event => {
+  event.waitUntil(
     caches
       .open(CACHE)
-      .then(c => c.addAll(SHELL))
+      .then(cache => cache.addAll(SHELL))
       .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener("activate", e => {
-  e.waitUntil(
+self.addEventListener("activate", event => {
+  event.waitUntil(
     caches
       .keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener("fetch", e => {
-  const req = e.request;
-  const url = new URL(req.url);
-  if (req.method !== "GET" || url.origin !== location.origin) return;
-  if (url.pathname.startsWith("/api/")) return; // trades and login always hit the network
-  e.respondWith(networkFirst(req, url));
+self.addEventListener("fetch", event => {
+  const request = event.request;
+  const url = new URL(request.url);
+  if (request.method !== "GET" || url.origin !== location.origin) return;
+  if (url.pathname.startsWith("/api/")) return;
+  event.respondWith(networkFirst(request, url));
 });
 
 // Network first; falls back to the cached copy when offline, failing or slow.
-async function networkFirst(req, url) {
+async function networkFirst(request, url) {
   const cache = await caches.open(CACHE);
-  const key = req.mode === "navigate" && url.pathname === "/" ? "/" : req;
-  const cached = await cache.match(key);
+  const cacheKey = request.mode === "navigate" && url.pathname === "/" ? "/" : request;
+  const cachedResponse = await cache.match(cacheKey);
   try {
-    const net = fetch(req);
-    const res = cached
-      ? await Promise.race([net, new Promise((_, no) => setTimeout(no, SLOW_MS))])
-      : await net;
-    if (res.status >= 500 && cached) return cached;
-    if (res.ok && !res.redirected) cache.put(key, res.clone());
-    return res;
+    const networkRequest = fetch(request);
+    const response = cachedResponse
+      ? await Promise.race([networkRequest, new Promise((_, reject) => setTimeout(reject, SLOW_MS))])
+      : await networkRequest;
+    if (response.status >= 500 && cachedResponse) return cachedResponse;
+    if (response.ok && !response.redirected) cache.put(cacheKey, response.clone());
+    return response;
   } catch {
-    if (cached) return cached;
-    if (req.mode === "navigate") return (await cache.match("/")) || Response.error();
+    if (cachedResponse) return cachedResponse;
+    if (request.mode === "navigate") return (await cache.match("/")) || Response.error();
     return Response.error();
   }
 }

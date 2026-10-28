@@ -18,21 +18,21 @@
 </head>
 <body>
   
-  <div id="lock" style="position:fixed;inset:0;background:var(--bg);display:none;place-items:center;z-index:9">
-    <div class="card" style="width:280px">
+  <div id="lock-screen">
+    <div class="card">
       <h2>Enter PIN</h2>
-      <input id="pin" type="password" autocomplete="current-password">
-      <p><button id="unlock">Unlock</button> <span id="le" class="r"></span></p>
+      <input id="pin-input" type="password" autocomplete="current-password">
+      <p><button id="unlock-button">Unlock</button> <span id="lock-error" class="negative"></span></p>
     </div>
   </div>
   
-  <main id="app" style="display:none">
+  <main id="app">
     <header class="topbar">
-      <h1>Memes Journal <span id="st"></span></h1>
+      <h1>Memes Journal <span id="status-text"></span></h1>
       <div class="topbar-controls">
-        <label for="period">Period</label>
-        <select id="period" class="period-sel" aria-label="Period filter"></select>
-        <button class="sec" id="lk" title="Lock" aria-label="Lock">
+        <label for="period-select">Period</label>
+        <select id="period-select" class="period-select" aria-label="Period filter"></select>
+        <button class="secondary" id="lock-button" title="Lock" aria-label="Lock">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -44,74 +44,74 @@
 
     <div class="card">
       <h2>Log a trade</h2>
-      <div class="grid">
-        <div><label>Date</label><input id="Date" type="date"></div>
-        <div><label>Ticker</label><input id="Ticker" placeholder="$TICKER"></div>
-        <div><label>Strategy</label><input id="Strategy" list="sl"><datalist id="sl"></datalist></div>
-        <div><label>Entry MC</label><input id="MC" placeholder="118k"></div>
-        <div><label>Price</label><input id="Price"></div>
-        <div><label>Entry Time</label><input id="Entry Time" type="time"></div>
-        <div><label>SL (%)</label><input id="SL" placeholder="-20"></div>
-        <div><label>TP (%)</label><input id="TP" placeholder="100"></div>
-        <div><label>RRR (auto)</label><input id="RRR" disabled></div>
-        <div><label>PnL (%)</label><input id="PnL" placeholder="-34"></div>
-        <div><label>Exit MC</label><input id="Exit MC" placeholder="450k"></div> 
-        <div><label>Exit Time</label><input id="Exit Time" type="time"></div>
+      <div class="form-grid">
+        <div><label>Date</label><input id="trade-date" type="date"></div>
+        <div><label>Ticker</label><input id="trade-ticker" placeholder="$TICKER"></div>
+        <div><label>Strategy</label><input id="trade-strategy" list="strategy-list"><datalist id="strategy-list"></datalist></div>
+        <div><label>Entry MC</label><input id="trade-entry-mc" placeholder="118k"></div>
+        <div><label>Price</label><input id="trade-price"></div>
+        <div><label>Entry Time</label><input id="trade-entry-time" type="time"></div>
+        <div><label>SL (%)</label><input id="trade-stop-loss" placeholder="-20"></div>
+        <div><label>TP (%)</label><input id="trade-take-profit" placeholder="100"></div>
+        <div><label>RRR (auto)</label><input id="trade-risk-reward" disabled></div>
+        <div><label>PnL (%)</label><input id="trade-pnl" placeholder="-34"></div>
+        <div><label>Exit MC</label><input id="trade-exit-mc" placeholder="450k"></div> 
+        <div><label>Exit Time</label><input id="trade-exit-time" type="time"></div>
         <div>
           <label>Review</label>
-          <select id="Review">
+          <select id="trade-review">
             <option>Plan</option>
             <option>Mistake</option>
             <option>Unplanned</option>
           </select>
         </div>
-        <div style="grid-column:span 2"><label>Review Tags</label><input id="Tags" placeholder="No FOMO, Patience"></div>
-        <div style="grid-column:1/-1"><label>Notes</label><textarea id="Notes" rows="3"></textarea></div>
+        <div class="span-2-columns"><label>Review Tags</label><input id="trade-tags" placeholder="No FOMO, Patience"></div>
+        <div class="span-all-columns"><label>Notes</label><textarea id="trade-notes" rows="3"></textarea></div>
       </div>
       <p>
-        <button id="add">Add trade</button>
-        <button class="sec" id="reload">Reload</button>
-        <button class="sec" id="exc" title="Download CSV" aria-label="Download CSV">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle">
+        <button id="save-trade-button">Add trade</button>
+        <button class="secondary" id="reload-button">Reload</button>
+        <button class="secondary" id="export-csv-button" title="Download CSV" aria-label="Download CSV">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/>
           </svg>
         </button>
-        <button class="sec" id="cancel" style="display:none">Cancel edit</button>
+        <button class="secondary" id="cancel-edit-button" hidden>Cancel edit</button>
       </p>
     </div>
 
     <div class="card">
       <h2>Trades Stats</h2>
-      <div class="kpis" id="kpi"></div>
+      <div class="stats-grid" id="stats-summary"></div>
     </div>
 
-    <div class="two">
-      <div class="card w">
+    <div class="two-column">
+      <div class="card table-scroll">
         <h2>By Strategy</h2>
-        <table id="t1"></table>
+        <table id="strategy-table"></table>
       </div>
-      <div class="card w">
-        <h2>By Entry Time</h2>
-        <table id="t2"></table>
+      <div class="card table-scroll">
+        <h2>By Time of Day / Review</h2>
+        <table id="time-review-table"></table>
       </div>
     </div>
 
-    <div class="card w">
+    <div class="card table-scroll">
       <h2>Trades</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <input id="q" placeholder="Search ticker, strategy, tags, notes, result..." style="flex:1;min-width:200px">
-        <select id="ps" style="width:auto">
+      <div class="table-toolbar">
+        <input id="search-input" placeholder="Search ticker, strategy, tags, notes, result...">
+        <select id="page-size-select">
           <option value="10">10 / page</option>
           <option value="20" selected>20 / page</option>
           <option value="50">50 / page</option>
           <option value="100">100 / page</option>
         </select>
       </div>
-      <table id="tb"></table>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-        <button class="sec" id="prev">‹ Prev</button>
-        <span id="pi" style="font-size:12px;color:var(--mut)"></span>
-        <button class="sec" id="next">Next ›</button>
+      <table id="trades-table"></table>
+      <div class="pagination">
+        <button class="secondary" id="prev-page-button">‹ Prev</button>
+        <span id="page-info"></span>
+        <button class="secondary" id="next-page-button">Next ›</button>
       </div>
     </div>
   </main>

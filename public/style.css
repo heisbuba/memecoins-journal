@@ -60,6 +60,24 @@ h2 {
   letter-spacing: 0.03em;
 }
 
+/* Full-screen PIN prompt and the main app */
+#lock-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: none;
+  place-items: center;
+  z-index: 9;
+}
+
+#lock-screen .card {
+  width: 280px;
+}
+
+#app {
+  display: none;
+}
+
 /* Top bar with global period selector */
 .topbar {
   display: flex;
@@ -90,7 +108,7 @@ h2 {
   margin: 0;
 }
 
-.period-sel {
+.period-select {
   width: auto;
   min-height: 42px;
   font-size: 14px;
@@ -118,21 +136,18 @@ h2 {
 }
 
 /* Form Layout Grid */
-.grid {
+.form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 12px;
 }
 
-/* Handle inline style column spans cleanly */
-.grid > div[style*="grid-column:span 2"],
-.grid > div[style*="grid-column: span 2"] {
+/* Form fields that span several columns */
+.form-grid > .span-2-columns {
   grid-column: span 2;
 }
 
-.grid > div[style*="grid-column:1/-1"],
-.grid > div[style*="grid-column: 1/-1"],
-.grid > div[style*="grid-column: 1 / -1"] {
+.form-grid > .span-all-columns {
   grid-column: 1 / -1;
 }
 
@@ -174,6 +189,11 @@ textarea {
   resize: vertical;
 }
 
+/* Elements with the hidden attribute stay hidden even when a rule sets display */
+[hidden] {
+  display: none !important;
+}
+
 /* Buttons */
 button {
   display: inline-flex;
@@ -196,13 +216,13 @@ button:hover {
   opacity: 0.92;
 }
 
-button.sec {
+button.secondary {
   background: transparent;
   color: var(--pri);
   border: 1px solid var(--bd);
 }
 
-button.sec:hover {
+button.secondary:hover {
   background: rgba(128, 128, 128, 0.08);
   border-color: var(--pri);
 }
@@ -213,13 +233,13 @@ button:disabled {
 }
 
 /* KPI Summary Cards */
-.kpis {
+.stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 10px;
 }
 
-.k {
+.stat-card {
   background: var(--bg);
   border: 1px solid var(--bd);
   border-radius: 6px;
@@ -227,7 +247,7 @@ button:disabled {
   text-align: center;
 }
 
-.k b {
+.stat-card .stat-value {
   display: block;
   font-size: 20px;
   font-weight: 700;
@@ -235,7 +255,7 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
-.k span {
+.stat-card .stat-label {
   font-size: 12px;
   color: var(--mut);
   margin-top: 4px;
@@ -243,22 +263,62 @@ button:disabled {
   font-weight: 500;
 }
 
-#lk {
+#lock-button {
   gap: 6px;
 }
 
-#lk svg {
+#lock-button svg {
   flex-shrink: 0;
 }
+
+#export-csv-button svg {
+  vertical-align: middle;
+}
+
+/* center the label by cap height so it lines up with the icon in any font */
+@supports (text-box: trim-both cap alphabetic) {
+  #lock-button span {
+    text-box: trim-both cap alphabetic;
+  }
+}
 /* Two-column layout */
-.two {
+.two-column {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 16px;
 }
 
+/* Trades table toolbar and pagination */
+.table-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+#search-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+#page-size-select {
+  width: auto;
+}
+
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+#page-info {
+  font-size: 12px;
+  color: var(--mut);
+}
+
 /* Scrollable Table Wrapper */
-.w {
+.table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -293,39 +353,39 @@ tbody tr:hover {
   background-color: rgba(128, 128, 128, 0.04);
 }
 
-#tb th:nth-child(4),  #tb td:nth-child(4),  /* MC */
-#tb th:nth-child(5),  #tb td:nth-child(5),  /* SL */
-#tb th:nth-child(6),  #tb td:nth-child(6),  /* TP */
-#tb th:nth-child(7),  #tb td:nth-child(7),  /* RRR */
-#tb th:nth-child(8),  #tb td:nth-child(8),  /* PnL */
-#tb th:nth-child(9),  #tb td:nth-child(9),  /* Exit MC */
-#tb th:nth-child(10), #tb td:nth-child(10), /* Result */
-#tb th:nth-child(11), #tb td:nth-child(11), /* R */
-#tb th:nth-child(12), #tb td:nth-child(12), /* SL-excess */
-#tb th:nth-child(13), #tb td:nth-child(13)  /* Hold */ {
+#trades-table th:nth-child(4),  #trades-table td:nth-child(4),  /* MC */
+#trades-table th:nth-child(5),  #trades-table td:nth-child(5),  /* SL */
+#trades-table th:nth-child(6),  #trades-table td:nth-child(6),  /* TP */
+#trades-table th:nth-child(7),  #trades-table td:nth-child(7),  /* RRR */
+#trades-table th:nth-child(8),  #trades-table td:nth-child(8),  /* PnL */
+#trades-table th:nth-child(9),  #trades-table td:nth-child(9),  /* Exit MC */
+#trades-table th:nth-child(10), #trades-table td:nth-child(10), /* Result */
+#trades-table th:nth-child(11), #trades-table td:nth-child(11), /* R */
+#trades-table th:nth-child(12), #trades-table td:nth-child(12), /* SL-excess */
+#trades-table th:nth-child(13), #trades-table td:nth-child(13)  /* Hold */ {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-/* Summary Tables (#t1, #t2) Column Alignment */
-#t1 th:nth-child(n+2), #t1 td:nth-child(n+2),
-#t2 th:nth-child(n+2), #t2 td:nth-child(n+2) {
+/* Summary Tables */
+#strategy-table th:nth-child(n+2), #strategy-table td:nth-child(n+2),
+#time-review-table th:nth-child(n+2), #time-review-table td:nth-child(n+2) {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
 /* Colors for Wins / Losses */
-.g, i.g {
+.positive, i.positive {
   color: var(--g);
   font-style: normal;
 }
 
-.r, i.r {
+.negative, i.negative {
   color: var(--r);
   font-style: normal;
 }
 
-#st {
+#status-text {
   font-size: 0.875rem;
   color: var(--mut);
   margin-left: 8px;
@@ -347,12 +407,12 @@ td a:hover {
   background: rgba(128, 128, 128, 0.1);
 }
 
-th.srt {
+th.sortable {
   user-select: none;
   cursor: pointer;
 }
 
-th.srt:hover {
+th.sortable:hover {
   color: var(--tx);
 }
 
@@ -370,7 +430,7 @@ th.srt:hover {
     width: 100%;
   }
 
-  .period-sel {
+  .period-select {
     flex: 1 1 auto;
   }
 
@@ -379,21 +439,20 @@ th.srt:hover {
     margin-bottom: 12px;
   }
 
-  .grid {
+  .form-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 
-  .grid > div[style*="grid-column:span 2"],
-  .grid > div[style*="grid-column: span 2"] {
+  .form-grid > .span-2-columns {
     grid-column: 1 / -1;
   }
 
-  .kpis {
+  .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .two {
+  .two-column {
     grid-template-columns: 1fr;
   }
 
@@ -413,15 +472,15 @@ th.srt:hover {
 }
 
 @media (max-width: 420px) {
-  .grid {
+  .form-grid {
     grid-template-columns: 1fr;
   }
 
-  .grid > div {
+  .form-grid > div {
     grid-column: 1 / -1 !important;
   }
 
-  .kpis {
+  .stats-grid {
     grid-template-columns: 1fr 1fr;
   }
 }

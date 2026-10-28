@@ -1,88 +1,98 @@
-const H = [
+// Trade fields in form and CSV order
+const TRADE_FIELDS = [
   "Date", "Ticker", "Strategy", "MC", "Price", "Entry Time",
   "SL", "TP", "RRR", "PnL", "Exit MC",  "Exit Time", "Review", "Tags", "Notes"
 ];
-const BE = 0.01;
+const BREAK_EVEN_THRESHOLD = 0.01;
 
-const esc = v => /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+const escapeCsvValue = value =>
+  /[",\n\r]/.test(value) ? '"' + value.replace(/"/g, '""') + '"' : value;
 
-// normalise unicode minus/dashes
-const clean = s => String(s ?? "").replace(/[\u2212\u2013\u2014]/g, "-").trim();
+// normalises minues/dashes, time, and percent
+const normalizeDashes = text => String(text ?? "").replace(/[\u2212\u2013\u2014]/g, "-").trim();
 
-const num = s => {
-  const v = parseFloat(clean(s).replace("%", ""));
-  return isNaN(v) ? null : v / 100;
+const parsePercent = text => {
+  const value = parseFloat(normalizeDashes(text).replace("%", ""));
+  return isNaN(value) ? null : value / 100;
 };
 
-const mins = t => {
-  const m = /^(\d+):(\d+)/.exec(t || "");
-  return m ? +m[1] * 60 + +m[2] : null;
+const timeToMinutes = time => {
+  const match = /^(\d+):(\d+)/.exec(time || "");
+  return match ? +match[1] * 60 + +match[2] : null;
 };
 
-function calc(r) {
-  const p = num(r.PnL);
-  const sl = num(r.SL);
-  const tp = num(r.TP);
-  const e = mins(r["Entry Time"]);
-  const x = mins(r["Exit Time"]);
+// derived numbers for one trade
+function calculateTrade(trade) {
+  const pnl = parsePercent(trade.PnL);
+  const stopLoss = parsePercent(trade.SL);
+  const takeProfit = parsePercent(trade.TP);
+  const entryMinutes = timeToMinutes(trade["Entry Time"]);
+  const exitMinutes = timeToMinutes(trade["Exit Time"]);
   return {
-    p,
-    sl,
-    tp,
-    res: p == null ? null : p > BE ? "Win" : p < -BE ? "Loss" : "BE",
-    R: p != null && sl ? p / Math.abs(sl) : null,
-    over: p != null && sl != null ? (p < -Math.abs(sl) ? p + Math.abs(sl) : 0) : null,
-    rrr: sl && tp != null ? Math.abs(tp) / Math.abs(sl) : null,
-    hold: e != null && x != null ? (((x - e) % 1440 + 1440) % 1440) / 60 : null,
-    tod: e == null
-      ? ""
-      : e < 360
-        ? "Night (00-06)"
-        : e < 720
-          ? "Morning (06-12)"
-          : e < 1080
-            ? "Afternoon (12-18)"
-            : "Evening (18-24)"
+    pnl,
+    stopLoss,
+    takeProfit,
+    result:
+      pnl == null ? null : pnl > BREAK_EVEN_THRESHOLD ? "Win" : pnl < -BREAK_EVEN_THRESHOLD ? "Loss" : "BE",
+    rMultiple: pnl != null && stopLoss ? pnl / Math.abs(stopLoss) : null,
+    slExcess:
+      pnl != null && stopLoss != null ? (pnl < -Math.abs(stopLoss) ? pnl + Math.abs(stopLoss) : 0) : null,
+    riskReward: stopLoss && takeProfit != null ? Math.abs(takeProfit) / Math.abs(stopLoss) : null,
+    holdHours:
+      entryMinutes != null && exitMinutes != null
+        ? (((exitMinutes - entryMinutes) % 1440 + 1440) % 1440) / 60
+        : null,
+    timeOfDay:
+      entryMinutes == null
+        ? ""
+        : entryMinutes < 360
+          ? "Night (00-06)"
+          : entryMinutes < 720
+            ? "Morning (06-12)"
+            : entryMinutes < 1080
+              ? "Afternoon (12-18)"
+              : "Evening (18-24)"
   };
 }
 
-const sum = a => a.reduce((x, y) => x + y, 0);
-const avg = a => a.length ? sum(a) / a.length : 0;
-const pc = (v, d = 1) => (v * 100).toFixed(d) + "%";
-const cl = v => (v > 0 ? "g" : v < 0 ? "r" : "");
-const esc2 = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-
-const pf = s => {
-  const v = parseFloat(clean(s).replace("%", ""));
-  return isNaN(v) ? "" : v + "%";
+const sum = values => values.reduce((total, value) => total + value, 0);
+const average = values => values.length ? sum(values) / values.length : 0;
+const formatPercent = (fraction, decimals = 1) => (fraction * 100).toFixed(decimals) + "%";
+const signClass = value => (value > 0 ? "positive" : value < 0 ? "negative" : "");
+const escapeHtml = text =>
+  String(text).replace(/[&<>]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
+const toPercentText = text => {
+  const value = parseFloat(normalizeDashes(text).replace("%", ""));
+  return isNaN(value) ? "" : value + "%";
 };
 
-// single place that normalises SL/TP/PnL and derives RRR
-function finalize(r) {
-  ["SL", "TP", "PnL"].forEach(k => (r[k] = pf(r[k])));
-  const c = calc(r);
-  r.RRR = c.rrr != null ? "1:" + c.rrr.toFixed(1) : "";
-  return r;
+// normalises SL/TP/PnL > derives RRR and format average
+function finalizeTrade(trade) {
+  ["SL", "TP", "PnL"].forEach(field => (trade[field] = toPercentText(trade[field])));
+  const metrics = calculateTrade(trade);
+  trade.RRR = metrics.riskReward != null ? "1:" + metrics.riskReward.toFixed(1) : "";
+  return trade;
 }
 
-// average that shows "-" instead of a fake 0 when there is no data
-const fmtAvg = (a, f) => (a.length ? f(avg(a)) : "-");
+const formatAverage = (values, format) => (values.length ? format(average(values)) : "-");
 
-// market cap text ("118k", "1.2m", "3bn", "1.5 trillion") to a number
-const MC_UNITS = { k: 1e3, m: 1e6, b: 1e9, t: 1e12 };
-const mcv = s => {
-  const m = /^\$?\s*([\d.,]+)\s*(k|m(?:m|il|illion)?|b(?:n|il|illion)?|t(?:n|ril|rillion)?)?$/i.exec(
-    String(s || "").trim()
+// normalize marketcap
+const MARKET_CAP_UNITS = { k: 1e3, m: 1e6, b: 1e9, t: 1e12 };
+const parseMarketCap = text => {
+  const match = /^\$?\s*([\d.,]+)\s*(k|m(?:m|il|illion)?|b(?:n|il|illion)?|t(?:n|ril|rillion)?)?$/i.exec(
+    String(text || "").trim()
   );
-  return m
-    ? parseFloat(m[1].replace(/,/g, "")) * (MC_UNITS[(m[2] || "").charAt(0).toLowerCase()] || 1)
+  return match
+    ? parseFloat(match[1].replace(/,/g, "")) *
+        (MARKET_CAP_UNITS[(match[2] || "").charAt(0).toLowerCase()] || 1)
     : null;
 };
 
 // test pure functions in Node
 if (typeof module !== "undefined") {
   module.exports = {
-    H, BE, esc, num, mins, calc, sum, avg, pc, cl, esc2,
-    pf, finalize, fmtAvg, mcv, clean
+    TRADE_FIELDS, BREAK_EVEN_THRESHOLD, escapeCsvValue, parsePercent, timeToMinutes,
+    calculateTrade, sum, average, formatPercent, signClass, escapeHtml,
+    toPercentText, finalizeTrade, formatAverage, parseMarketCap, normalizeDashes
   };
 }

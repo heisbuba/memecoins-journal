@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Memes Trading Journal",
   "short_name": "Memes Journal",
-  "description": "Personal memecoin trade journal.",
+  "description": "My personal memecoins trading journal.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
