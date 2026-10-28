@@ -271,14 +271,14 @@ button:disabled {
 }
 
 #lock-button svg {
-  display: block;
+  display: inline-block;
+  vertical-align: middle;
   flex-shrink: 0;
-  width: 14px;
-  height: 14px;
 }
 
 #lock-button span {
   display: inline-block;
+  vertical-align: middle;
   line-height: 1;
 }
 
@@ -286,6 +286,12 @@ button:disabled {
   vertical-align: middle;
 }
 
+/* center the label by cap height so it lines up with the icon in any font */
+@supports (text-box: trim-both cap alphabetic) {
+  #lock-button span {
+    text-box: trim-both cap alphabetic;
+  }
+}
 /* Two-column layout */
 .two-column {
   display: grid;
