@@ -1,5 +1,5 @@
 // Cloudflare Pages Function: /api/trades
-const M = {
+const FIELD_TO_COLUMN = {
   Date: "date",
   Ticker: "ticker",
   Strategy: "strategy",
@@ -17,67 +17,67 @@ const M = {
   Notes: "notes"
 };
 
-const J = (o, s = 200) =>
-  new Response(JSON.stringify(o), {
-    status: s,
+const jsonResponse = (data, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
   });
 
 export async function onRequestGet({ env }) {
   const { results } = await env.DB.prepare("SELECT * FROM trades ORDER BY date, id").all();
-  return J(
-    results.map(r => {
-      const o = { id: r.id };
-      for (const k in M) o[k] = r[M[k]] || "";
-      return o;
+  return jsonResponse(
+    results.map(row => {
+      const trade = { id: row.id };
+      for (const field in FIELD_TO_COLUMN) trade[field] = row[FIELD_TO_COLUMN[field]] || "";
+      return trade;
     })
   );
 }
 
 export async function onRequestPost({ env, request }) {
-  let b;
+  let requestBody;
   try {
-    b = await request.json();
+    requestBody = await request.json();
   } catch {
-    return J({ error: "bad json" }, 400);
+    return jsonResponse({ error: "bad json" }, 400);
   }
-  const ok = (b.trades || []).slice(0, 2000).filter(t => t && t.Date && t.Ticker);
-  const cols = Object.values(M);
-  const st = env.DB.prepare(
-    `INSERT INTO trades (${cols.join(",")}) VALUES (${cols.map(() => "?").join(",")})`
+  const validTrades = (requestBody.trades || []).slice(0, 2000).filter(trade => trade && trade.Date && trade.Ticker);
+  const columns = Object.values(FIELD_TO_COLUMN);
+  const insertStatement = env.DB.prepare(
+    `INSERT INTO trades (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")})`
   );
-  for (let i = 0; i < ok.length; i += 50) {
+  for (let i = 0; i < validTrades.length; i += 50) {
     await env.DB.batch(
-      ok.slice(i, i + 50).map(t =>
-        st.bind(...Object.keys(M).map(k => String(t[k] ?? "").slice(0, 20000)))
+      validTrades.slice(i, i + 50).map(trade =>
+        insertStatement.bind(...Object.keys(FIELD_TO_COLUMN).map(field => String(trade[field] ?? "").slice(0, 20000)))
       )
     );
   }
-  return J({ added: ok.length });
+  return jsonResponse({ added: validTrades.length });
 }
 
 export async function onRequestDelete({ env, request }) {
   const id = +new URL(request.url).searchParams.get("id");
-  if (!id) return J({ error: "id required" }, 400);
+  if (!id) return jsonResponse({ error: "id required" }, 400);
   await env.DB.prepare("DELETE FROM trades WHERE id=?").bind(id).run();
-  return J({ deleted: id });
+  return jsonResponse({ deleted: id });
 }
 
 export async function onRequestPut({ env, request }) {
   const id = +new URL(request.url).searchParams.get("id");
-  let b;
+  let requestBody;
   try {
-    b = await request.json();
+    requestBody = await request.json();
   } catch {
-    return J({ error: "bad json" }, 400);
+    return jsonResponse({ error: "bad json" }, 400);
   }
-  const t = b.trade;
-  if (!id || !t || !t.Date || !t.Ticker) return J({ error: "id and trade required" }, 400);
-  const keys = Object.keys(M);
+  const trade = requestBody.trade;
+  if (!id || !trade || !trade.Date || !trade.Ticker) return jsonResponse({ error: "id and trade required" }, 400);
+  const fields = Object.keys(FIELD_TO_COLUMN);
   await env.DB.prepare(
-    `UPDATE trades SET ${keys.map(k => M[k] + "=?").join(",")} WHERE id=?`
+    `UPDATE trades SET ${fields.map(field => FIELD_TO_COLUMN[field] + "=?").join(",")} WHERE id=?`
   )
-    .bind(...keys.map(k => String(t[k] ?? "").slice(0, 20000)), id)
+    .bind(...fields.map(field => String(trade[field] ?? "").slice(0, 20000)), id)
     .run();
-  return J({ updated: id });
+  return jsonResponse({ updated: id });
 }
