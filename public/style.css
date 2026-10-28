@@ -264,11 +264,22 @@ button:disabled {
 }
 
 #lock-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
 }
 
 #lock-button svg {
+  display: block;
   flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+#lock-button span {
+  display: inline-block;
+  line-height: 1;
 }
 
 #export-csv-button svg {
