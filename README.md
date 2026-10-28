@@ -77,34 +77,7 @@ PIN-locked like the wapka sites of 2017. 🔒 Hosted on Cloudflare.
 7. **Attach your custom domain** (e.g. `journal.quantvat.name.ng`) in
    **Pages → Custom domains**, and point the DNS record to Cloudflare.
 
-That's it. 🎉
-
-## Security Notes
-
-- The PIN never leaves the server — login is verified in `functions/api/login.js` and compared against the encrypted `PIN` secret.
-- Sessions are HMAC-SHA256 signed with the `SECRET` key and expire server-side (see `functions/_middleware.js`).
-- Repeated failed logins are tracked per-IP in the `login_attempts` table.
-- The middleware also redirects the default `*.pages.dev` hostname to your custom domain, so the journal only answers on your own domain.
-
-## Project Structure
-
-```
-├── public/                 # Static frontend (deployed as-is)
-│   ├── index.html
-│   ├── app.js
-│   ├── calc.js
-│   ├── style.css
-│   ├── sw.js               # Service worker (PWA)
-│   ├── manifest.webmanifest
-│   └── icons/              # PWA icons
-├── functions/              # Cloudflare Pages Functions
-│   ├── _middleware.js      # Session auth + pages.dev redirect
-│   └── api/
-│       ├── login.js        # PIN login endpoint
-│       └── trades.js       # CRUD for trades (requires session)
-├── schema.sql              # D1 schema (trades + login_attempts)
-└── README.md
-```
+That's it.
 
 ## License
 
