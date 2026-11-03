@@ -1,6 +1,6 @@
 // Trade fields in form and CSV order
 const TRADE_FIELDS = [
-  "Date", "Ticker", "Strategy", "MC", "Price", "Entry Time",
+  "Date", "Ticker", "Strategy", "MC", "Entry Amount", "Currency", "Entry Time",
   "SL", "TP", "RRR", "PnL", "Exit MC",  "Exit Time", "Review", "Tags", "Notes"
 ];
 const BREAK_EVEN_THRESHOLD = 0.01;
@@ -16,6 +16,26 @@ const parsePercent = text => {
   return isNaN(value) ? null : value / 100;
 };
 
+const CURRENCY_SYMBOLS = { USD: "$", NGN: "₦" };
+const DEFAULT_CURRENCY = "NGN";
+
+const normalizeCurrency = text => {
+  const code = String(text ?? "").trim().toUpperCase();
+  return CURRENCY_SYMBOLS[code] ? code : DEFAULT_CURRENCY;
+};
+
+const detectCurrency = text => (/\$|usd/i.test(String(text ?? "")) ? "USD" : "NGN");
+
+const parseAmount = text => {
+  const value = parseFloat(normalizeDashes(text).replace(/[^0-9.\-]/g, ""));
+  return isNaN(value) ? null : value;
+};
+
+const formatMoney = (amount, currency) =>
+  (amount < 0 ? "-" : "") +
+  CURRENCY_SYMBOLS[normalizeCurrency(currency)] +
+  Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 const timeToMinutes = time => {
   const match = /^(\d+):(\d+)/.exec(time || "");
   return match ? +match[1] * 60 + +match[2] : null;
@@ -26,10 +46,15 @@ function calculateTrade(trade) {
   const pnl = parsePercent(trade.PnL);
   const stopLoss = parsePercent(trade.SL);
   const takeProfit = parsePercent(trade.TP);
+  const amount = parseAmount(trade["Entry Amount"]);
+  const currency = normalizeCurrency(trade.Currency);
   const entryMinutes = timeToMinutes(trade["Entry Time"]);
   const exitMinutes = timeToMinutes(trade["Exit Time"]);
   return {
     pnl,
+    amount,
+    currency,
+    pnlAmount: amount != null && pnl != null ? amount * pnl : null,
     stopLoss,
     takeProfit,
     result:
@@ -69,9 +94,26 @@ const toPercentText = text => {
 // normalises SL/TP/PnL > derives RRR and format average
 function finalizeTrade(trade) {
   ["SL", "TP", "PnL"].forEach(field => (trade[field] = toPercentText(trade[field])));
+  trade.Currency = detectCurrency(trade["Entry Amount"]);
+  const amount = parseAmount(trade["Entry Amount"]);
+  trade["Entry Amount"] = amount == null ? "" : String(amount);
   const metrics = calculateTrade(trade);
   trade.RRR = metrics.riskReward != null ? "1:" + metrics.riskReward.toFixed(1) : "";
   return trade;
+}
+
+function summarizeByCurrency(metricsList) {
+  const totals = {};
+  metricsList.forEach(metrics => {
+    if (metrics.amount == null || metrics.pnlAmount == null) return;
+    const row = totals[metrics.currency] || (totals[metrics.currency] = { currency: metrics.currency, trades: 0, invested: 0, gained: 0, lost: 0, net: 0 });
+    row.trades++;
+    row.invested += metrics.amount;
+    if (metrics.pnlAmount > 0) row.gained += metrics.pnlAmount;
+    else if (metrics.pnlAmount < 0) row.lost += -metrics.pnlAmount;
+    row.net += metrics.pnlAmount;
+  });
+  return Object.values(totals);
 }
 
 const formatAverage = (values, format) => (values.length ? format(average(values)) : "-");
@@ -93,6 +135,7 @@ if (typeof module !== "undefined") {
   module.exports = {
     TRADE_FIELDS, BREAK_EVEN_THRESHOLD, escapeCsvValue, parsePercent, timeToMinutes,
     calculateTrade, sum, average, formatPercent, signClass, escapeHtml,
-    toPercentText, finalizeTrade, formatAverage, parseMarketCap, normalizeDashes
+    toPercentText, finalizeTrade, formatAverage, parseMarketCap, normalizeDashes,
+    normalizeCurrency, detectCurrency, parseAmount, formatMoney, summarizeByCurrency
   };
 }
