@@ -129,13 +129,3 @@ const parseMarketCap = text => {
         (MARKET_CAP_UNITS[(match[2] || "").charAt(0).toLowerCase()] || 1)
     : null;
 };
-
-// test pure functions in Node
-if (typeof module !== "undefined") {
-  module.exports = {
-    TRADE_FIELDS, BREAK_EVEN_THRESHOLD, escapeCsvValue, parsePercent, timeToMinutes,
-    calculateTrade, sum, average, formatPercent, signClass, escapeHtml,
-    toPercentText, finalizeTrade, formatAverage, parseMarketCap, normalizeDashes,
-    normalizeCurrency, detectCurrency, parseAmount, formatMoney, summarizeByCurrency
-  };
-}
