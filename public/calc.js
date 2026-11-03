@@ -1,6 +1,6 @@
 // Trade fields in form and CSV order
 const TRADE_FIELDS = [
-  "Date", "Ticker", "Strategy", "MC", "Entry Amount", "Currency", "Entry Time",
+  "Date", "Ticker", "Strategy", "MC", "Entry Size", "Currency", "Entry Time",
   "SL", "TP", "RRR", "PnL", "Exit MC",  "Exit Time", "Review", "Tags", "Notes"
 ];
 const BREAK_EVEN_THRESHOLD = 0.01;
@@ -46,7 +46,7 @@ function calculateTrade(trade) {
   const pnl = parsePercent(trade.PnL);
   const stopLoss = parsePercent(trade.SL);
   const takeProfit = parsePercent(trade.TP);
-  const amount = parseAmount(trade["Entry Amount"]);
+  const amount = parseAmount(trade["Entry Size"]);
   const currency = normalizeCurrency(trade.Currency);
   const entryMinutes = timeToMinutes(trade["Entry Time"]);
   const exitMinutes = timeToMinutes(trade["Exit Time"]);
@@ -94,9 +94,9 @@ const toPercentText = text => {
 // normalises SL/TP/PnL > derives RRR and format average
 function finalizeTrade(trade) {
   ["SL", "TP", "PnL"].forEach(field => (trade[field] = toPercentText(trade[field])));
-  trade.Currency = detectCurrency(trade["Entry Amount"]);
-  const amount = parseAmount(trade["Entry Amount"]);
-  trade["Entry Amount"] = amount == null ? "" : String(amount);
+  trade.Currency = detectCurrency(trade["Entry Size"]);
+  const amount = parseAmount(trade["Entry Size"]);
+  trade["Entry Size"] = amount == null ? "" : String(amount);
   const metrics = calculateTrade(trade);
   trade.RRR = metrics.riskReward != null ? "1:" + metrics.riskReward.toFixed(1) : "";
   return trade;
