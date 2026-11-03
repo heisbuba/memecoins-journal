@@ -353,6 +353,26 @@ tbody tr:hover {
   background-color: rgba(128, 128, 128, 0.04);
 }
 
+tr.trade-row {
+  cursor: pointer;
+}
+
+tr.trade-row.expanded,
+tr.notes-row,
+tr.notes-row:hover {
+  background-color: rgba(128, 128, 128, 0.07);
+}
+
+.notes-text {
+  position: sticky;
+  left: 0;
+  width: min(720px, calc(100vw - 72px));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+  padding: 4px 0;
+}
+
 #trades-table th:nth-child(4),  #trades-table td:nth-child(4),  /* MC */
 #trades-table th:nth-child(5),  #trades-table td:nth-child(5),  /* SL */
 #trades-table th:nth-child(6),  #trades-table td:nth-child(6),  /* TP */
