@@ -261,7 +261,7 @@ function renderJournal() {
       .map(({ trade, index, metrics }) => {
         const isExpanded = expandedTradeIds.has(trade.id);
         const notesRow = isExpanded
-          ? `<tr class="notes-row"><td colspan="${headerColumns.length + 1}"><div class="notes-text">${
+          ? `<tr class="notes-row" name="notes"><td colspan="${headerColumns.length + 1}"><div class="notes-text">${
               trade.Notes ? escapeHtml(trade.Notes) : "<em>No notes for this trade.</em>"
             }</div></td></tr>`
           : "";
@@ -371,6 +371,8 @@ function toggleNotes(target) {
   const row = target.closest("tr.trade-row");
   if (!row || window.getSelection().toString()) return;
   const tradeId = +row.dataset.tradeId;
+  const isAlreadyOpen = expandedTradeIds.has(tradeId);
+  expandedTradeIds.clear();
   if (!expandedTradeIds.delete(tradeId)) expandedTradeIds.add(tradeId);
   renderJournal();
 }
