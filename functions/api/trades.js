@@ -38,7 +38,15 @@ const jsonResponse = (data, status = 200) =>
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
   });
 
-export async function onRequestGet({ env }) {
+const guarded = handler => async context => {
+  try {
+    return await handler(context);
+  } catch (error) {
+    return jsonResponse({ error: String(error.message || error) }, 500);
+  }
+};
+
+export const onRequestGet = guarded(async ({ env }) => {
   const { results } = await env.DB.prepare("SELECT * FROM trades ORDER BY date, id").all();
   return jsonResponse(
     results.map(row => {
@@ -47,9 +55,9 @@ export async function onRequestGet({ env }) {
       return trade;
     })
   );
-}
+});
 
-export async function onRequestPost({ env, request }) {
+export const onRequestPost = guarded(async ({ env, request }) => {
   let requestBody;
   try {
     requestBody = await request.json();
@@ -61,28 +69,24 @@ export async function onRequestPost({ env, request }) {
   const insertStatement = env.DB.prepare(
     `INSERT INTO trades (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")})`
   );
-  try {
-    for (let i = 0; i < validTrades.length; i += 50) {
-      await env.DB.batch(
-        validTrades.slice(i, i + 50).map(trade =>
-          insertStatement.bind(...Object.keys(FIELD_TO_COLUMN).map(field => toDbValue(field, trade[field])))
-        )
-      );
-    }
-  } catch (error) {
-    return jsonResponse({ error: String(error.message || error) }, 500);
+  for (let i = 0; i < validTrades.length; i += 50) {
+    await env.DB.batch(
+      validTrades.slice(i, i + 50).map(trade =>
+        insertStatement.bind(...Object.keys(FIELD_TO_COLUMN).map(field => toDbValue(field, trade[field])))
+      )
+    );
   }
   return jsonResponse({ added: validTrades.length });
-}
+});
 
-export async function onRequestDelete({ env, request }) {
+export const onRequestDelete = guarded(async ({ env, request }) => {
   const id = +new URL(request.url).searchParams.get("id");
   if (!id) return jsonResponse({ error: "id required" }, 400);
   await env.DB.prepare("DELETE FROM trades WHERE id=?").bind(id).run();
   return jsonResponse({ deleted: id });
-}
+});
 
-export async function onRequestPut({ env, request }) {
+export const onRequestPut = guarded(async ({ env, request }) => {
   const id = +new URL(request.url).searchParams.get("id");
   let requestBody;
   try {
@@ -93,14 +97,10 @@ export async function onRequestPut({ env, request }) {
   const trade = requestBody.trade;
   if (!id || !trade || !trade.Date || !trade.Ticker) return jsonResponse({ error: "id and trade required" }, 400);
   const fields = Object.keys(FIELD_TO_COLUMN);
-  try {
-    await env.DB.prepare(
-      `UPDATE trades SET ${fields.map(field => FIELD_TO_COLUMN[field] + "=?").join(",")} WHERE id=?`
-    )
-      .bind(...fields.map(field => toDbValue(field, trade[field])), id)
-      .run();
-  } catch (error) {
-    return jsonResponse({ error: String(error.message || error) }, 500);
-  }
+  await env.DB.prepare(
+    `UPDATE trades SET ${fields.map(field => FIELD_TO_COLUMN[field] + "=?").join(",")} WHERE id=?`
+  )
+    .bind(...fields.map(field => toDbValue(field, trade[field])), id)
+    .run();
   return jsonResponse({ updated: id });
-}
+});
