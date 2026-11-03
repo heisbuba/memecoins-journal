@@ -8,7 +8,7 @@ const FORM_FIELD_IDS = {
   Ticker: "trade-ticker",
   Strategy: "trade-strategy",
   MC: "trade-entry-mc",
-  "Entry Amount": "trade-entry-amount",
+  "Entry Size": "trade-entry-size",
   "Entry Time": "trade-entry-time",
   SL: "trade-stop-loss",
   TP: "trade-take-profit",
@@ -100,7 +100,7 @@ const SORT_VALUE_GETTERS = {
   Ticker: entry => (entry.trade.Ticker || "").toLowerCase(),
   Strategy: entry => (entry.trade.Strategy || "").toLowerCase(),
   MC: entry => parseMarketCap(entry.trade.MC),
-  Amount: entry => entry.metrics.amount,
+  Size: entry => entry.metrics.amount,
   "PnL Amt": entry => entry.metrics.pnlAmount,
   SL: entry => (entry.metrics.stopLoss == null ? null : Math.abs(entry.metrics.stopLoss)),
   TP: entry => entry.metrics.takeProfit,
@@ -195,13 +195,13 @@ function renderJournal() {
     .join("");
 
   const headerColumns = [
-    "Date", "Ticker", "Strategy", "MC", "Amount", "SL", "TP", "RRR", "PnL", "PnL Amt", "Exit MC",
+    "Date", "Ticker", "Strategy", "MC", "Size", "SL", "TP", "RRR", "PnL", "PnL Amt", "Exit MC",
     "Result", "R", "SL-excess", "Hold", "Time of day", "Review", "Tags"
   ];
   const textCell = value => `<td>${escapeHtml(value || "")}</td>`;
   const cellFor = (column, trade, metrics) => {
     switch (column) {
-      case "Amount":
+      case "Size":
         return `<td>${metrics.amount == null ? "" : formatMoney(metrics.amount, metrics.currency)}</td>`;
       case "PnL Amt":
         return `<td class="${signClass(metrics.pnlAmount)}">${metrics.pnlAmount == null ? "" : formatMoney(metrics.pnlAmount, metrics.currency)}</td>`;
@@ -280,7 +280,7 @@ let editingTradeId = null;
 
 function endEdit() {
   editingTradeId = null;
-  ["Ticker", "MC", "Entry Amount", "Entry Time", "SL", "TP", "RRR", "PnL", "Exit Time", "Exit MC", "Tags", "Notes"].forEach(
+  ["Ticker", "MC", "Entry Size", "Entry Time", "SL", "TP", "RRR", "PnL", "Exit Time", "Exit MC", "Tags", "Notes"].forEach(
     field => (fieldInput(field).value = "")
   );
   fieldInput("Date").valueAsDate = new Date();
@@ -298,8 +298,8 @@ function startEdit(trade) {
         : (trade[field] || "");
     }
   });
-  if (trade["Entry Amount"] !== "") {
-    fieldInput("Entry Amount").value = CURRENCY_SYMBOLS[normalizeCurrency(trade.Currency)] + trade["Entry Amount"];
+  if (trade["Entry Size"] !== "") {
+    fieldInput("Entry Size").value = CURRENCY_SYMBOLS[normalizeCurrency(trade.Currency)] + trade["Entry Size"];
   }
   fieldInput("SL").dispatchEvent(new Event("input"));
   byId("save-trade-button").textContent = "Save changes";
