@@ -8,7 +8,7 @@ const FORM_FIELD_IDS = {
   Ticker: "trade-ticker",
   Strategy: "trade-strategy",
   MC: "trade-entry-mc",
-  Price: "trade-price",
+  "Entry Amount": "trade-entry-amount",
   "Entry Time": "trade-entry-time",
   SL: "trade-stop-loss",
   TP: "trade-take-profit",
@@ -76,17 +76,20 @@ function buildGroupRows(entries, groupKey) {
       const wins = groupMetrics.filter(metrics => metrics.result == "Win").length;
       const totalPnl = sum(groupMetrics.map(metrics => metrics.pnl));
       const rMultiples = groupMetrics.filter(metrics => metrics.rMultiple != null).map(metrics => metrics.rMultiple);
+      const netAmounts = summarizeByCurrency(groupMetrics)
+        .map(row => `<span class="${signClass(row.net)}">${formatMoney(row.net, row.currency)}</span>`)
+        .join("<br>") || "-";
       return (
         `<tr><td>${escapeHtml(label)}</td><td>${groupMetrics.length}</td><td>${formatPercent(wins / groupMetrics.length, 0)}</td>` +
         `<td class="${signClass(totalPnl)}">${formatPercent(totalPnl)}</td>` +
-        `<td>${formatAverage(rMultiples, value => value.toFixed(2) + "R")}</td></tr>`
+        `<td>${formatAverage(rMultiples, value => value.toFixed(2) + "R")}</td><td>${netAmounts}</td></tr>`
       );
     })
     .join("");
 }
 
 const groupHeaderRow = label =>
-  `<tr><th>${label}</th><th>Trades</th><th>Win %</th><th>PnL</th><th>Avg R</th></tr>`;
+  `<tr><th>${label}</th><th>Trades</th><th>Win %</th><th>PnL</th><th>Avg R</th><th>Net amount</th></tr>`;
 
 const SEARCH_FIELDS = ["Ticker", "Strategy", "Tags", "Notes", "Review"];
 let searchTimer, searchQuery = "", sortColumn = "Date", sortDirection = -1, currentPage = 0, pageSize = 20, selectedPeriod = "all";
@@ -97,6 +100,8 @@ const SORT_VALUE_GETTERS = {
   Ticker: entry => (entry.trade.Ticker || "").toLowerCase(),
   Strategy: entry => (entry.trade.Strategy || "").toLowerCase(),
   MC: entry => parseMarketCap(entry.trade.MC),
+  Amount: entry => entry.metrics.amount,
+  "PnL Amt": entry => entry.metrics.pnlAmount,
   SL: entry => (entry.metrics.stopLoss == null ? null : Math.abs(entry.metrics.stopLoss)),
   TP: entry => entry.metrics.takeProfit,
   RRR: entry => entry.metrics.riskReward,
@@ -163,6 +168,15 @@ function renderJournal() {
     ["Avg hold losers", formatAverage(losers.filter(metrics => metrics.holdHours != null).map(metrics => metrics.holdHours), value => value.toFixed(1) + "h")]
   ];
 
+  summarizeByCurrency(closedMetrics).forEach(row => {
+    statCards.push(
+      [`Net result (${row.currency})`, `<i class="${signClass(row.net)}">${formatMoney(row.net, row.currency)}</i>`],
+      [`Gained (${row.currency})`, `<i class="positive">${formatMoney(row.gained, row.currency)}</i>`],
+      [`Lost (${row.currency})`, `<i class="${row.lost ? "negative" : ""}">${formatMoney(-row.lost, row.currency)}</i>`],
+      [`Invested (${row.currency})`, formatMoney(row.invested, row.currency)]
+    );
+  });
+
   byId("stats-summary").innerHTML = statCards
     .map(([label, value]) => `<div class="stat-card"><b class="stat-value">${value}</b><span class="stat-label">${label}</span></div>`)
     .join("");
@@ -180,8 +194,31 @@ function renderJournal() {
     .map(strategy => `<option value="${strategy.replace(/"/g, "&quot;")}">`)
     .join("");
 
-  const dataColumns = ["Date", "Ticker", "Strategy", "MC", "SL", "TP", "RRR", "PnL", "Exit MC"];
-  const headerColumns = [...dataColumns, "Result", "R", "SL-excess", "Hold", "Time of day", "Review", "Tags"];
+  const headerColumns = [
+    "Date", "Ticker", "Strategy", "MC", "Amount", "SL", "TP", "RRR", "PnL", "PnL Amt", "Exit MC",
+    "Result", "R", "SL-excess", "Hold", "Time of day", "Review", "Tags"
+  ];
+  const textCell = value => `<td>${escapeHtml(value || "")}</td>`;
+  const cellFor = (column, trade, metrics) => {
+    switch (column) {
+      case "Amount":
+        return `<td>${metrics.amount == null ? "" : formatMoney(metrics.amount, metrics.currency)}</td>`;
+      case "PnL Amt":
+        return `<td class="${signClass(metrics.pnlAmount)}">${metrics.pnlAmount == null ? "" : formatMoney(metrics.pnlAmount, metrics.currency)}</td>`;
+      case "Result":
+        return `<td class="${metrics.result == "Win" ? "positive" : metrics.result == "Loss" ? "negative" : ""}">${metrics.result || ""}</td>`;
+      case "R":
+        return `<td>${metrics.rMultiple == null ? "" : metrics.rMultiple.toFixed(2) + "R"}</td>`;
+      case "SL-excess":
+        return `<td class="${signClass(metrics.slExcess)}">${metrics.slExcess ? formatPercent(metrics.slExcess) : ""}</td>`;
+      case "Hold":
+        return `<td>${metrics.holdHours == null ? "" : metrics.holdHours.toFixed(1) + "h"}</td>`;
+      case "Time of day":
+        return `<td>${metrics.timeOfDay}</td>`;
+      default:
+        return textCell(trade[column]);
+    }
+  };
 
   let matchingEntries = periodEntries.slice();
   if (searchQuery) {
@@ -223,14 +260,7 @@ function renderJournal() {
       .map(({ trade, index, metrics }) => {
         return (
           `<tr title="${escapeHtml((trade.Notes || "").slice(0, 400)).replace(/"/g, "&quot;")}">` +
-          dataColumns.map(column => `<td>${escapeHtml(trade[column] || "")}</td>`).join("") +
-          `<td class="${metrics.result == "Win" ? "positive" : metrics.result == "Loss" ? "negative" : ""}">${metrics.result || ""}</td>` +
-          `<td>${metrics.rMultiple == null ? "" : metrics.rMultiple.toFixed(2) + "R"}</td>` +
-          `<td class="${signClass(metrics.slExcess)}">${metrics.slExcess ? formatPercent(metrics.slExcess) : ""}</td>` +
-          `<td>${metrics.holdHours == null ? "" : metrics.holdHours.toFixed(1) + "h"}</td>` +
-          `<td>${metrics.timeOfDay}</td>` +
-          `<td>${escapeHtml(trade.Review || "")}</td>` +
-          `<td>${escapeHtml(trade.Tags || "")}</td>` +
+          headerColumns.map(column => cellFor(column, trade, metrics)).join("") +
           `<td><a href="#" data-index="${index}" class="edit-link" title="Edit">✎</a> ` +
           `<a href="#" data-index="${index}" class="delete-link" title="Delete">✕</a></td></tr>`
         );
@@ -250,7 +280,7 @@ let editingTradeId = null;
 
 function endEdit() {
   editingTradeId = null;
-  ["Ticker", "MC", "Price", "Entry Time", "SL", "TP", "RRR", "PnL", "Exit Time", "Exit MC", "Tags", "Notes"].forEach(
+  ["Ticker", "MC", "Entry Amount", "Entry Time", "SL", "TP", "RRR", "PnL", "Exit Time", "Exit MC", "Tags", "Notes"].forEach(
     field => (fieldInput(field).value = "")
   );
   fieldInput("Date").valueAsDate = new Date();
@@ -268,6 +298,9 @@ function startEdit(trade) {
         : (trade[field] || "");
     }
   });
+  if (trade["Entry Amount"] !== "") {
+    fieldInput("Entry Amount").value = CURRENCY_SYMBOLS[normalizeCurrency(trade.Currency)] + trade["Entry Amount"];
+  }
   fieldInput("SL").dispatchEvent(new Event("input"));
   byId("save-trade-button").textContent = "Save changes";
   byId("cancel-edit-button").hidden = false;
