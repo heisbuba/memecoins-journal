@@ -41,7 +41,13 @@ async function callTradesApi(method, body, query = "") {
     byId("pin-input").focus();
     throw new Error("locked");
   }
-  if (!response.ok) throw new Error(response.status);
+  if (!response.ok) {
+    let detail = response.status;
+    try {
+      detail = (await response.json()).error || detail;
+    } catch (_) {}
+    throw new Error(detail);
+  }
   return response.json();
 }
 
