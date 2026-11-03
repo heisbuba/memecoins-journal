@@ -1,4 +1,4 @@
-const CACHE = "journal-shell-v1";
+const CACHE = "journal-shell-v2";
 const SHELL = [
   "/",
   "/style.css",
