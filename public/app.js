@@ -114,7 +114,6 @@ const SORT_VALUE_GETTERS = {
   PnL: entry => entry.metrics.pnl,
   "Exit MC": entry => parseMarketCap(entry.trade["Exit MC"]),
   Result: entry => entry.metrics.result,
-  R: entry => entry.metrics.rMultiple,
   "SL-excess": entry => entry.metrics.slExcess,
   Hold: entry => entry.metrics.holdHours,
   "Time of day": entry => timeToMinutes(entry.trade["Entry Time"]),
@@ -202,7 +201,7 @@ function renderJournal() {
 
   const headerColumns = [
     "Date", "Ticker", "Strategy", "MC", "Size", "SL", "TP", "RRR", "PnL", "PnL Amt", "Exit MC",
-    "Result", "R", "SL-excess", "Hold", "Time of day", "Review", "Tags"
+    "Result", "SL-excess", "Hold", "Time of day", "Review", "Tags"
   ];
   const textCell = value => `<td>${escapeHtml(value || "")}</td>`;
   const cellFor = (column, trade, metrics) => {
@@ -213,8 +212,6 @@ function renderJournal() {
         return `<td class="${signClass(metrics.pnlAmount)}">${metrics.pnlAmount == null ? "" : formatMoney(metrics.pnlAmount, metrics.currency)}</td>`;
       case "Result":
         return `<td class="${metrics.result == "Win" ? "positive" : metrics.result == "Loss" ? "negative" : ""}">${metrics.result || ""}</td>`;
-      case "R":
-        return `<td>${metrics.rMultiple == null ? "" : metrics.rMultiple.toFixed(2) + "R"}</td>`;
       case "SL-excess":
         return `<td class="${signClass(metrics.slExcess)}">${metrics.slExcess ? formatPercent(metrics.slExcess) : ""}</td>`;
       case "Hold":
