@@ -38,10 +38,7 @@ export async function onRequestPost({ env, request }) {
     .first();
   if (recent.n >= 5) return jsonResponse({ error: "Too many attempts. Try again in 15 minutes." }, 429);
 
-  let requestBody = {};
-  try {
-    requestBody = await request.json();
-  } catch {}
+  const requestBody = await request.json().catch(() => ({}));
 
   const pinMatches =
     env.PIN &&
