@@ -42,7 +42,8 @@ const guarded = handler => async context => {
   try {
     return await handler(context);
   } catch (error) {
-    return jsonResponse({ error: String(error.message || error) }, 500);
+    console.error(error);
+    return jsonResponse({ error: "Server error" }, 500);
   }
 };
 
