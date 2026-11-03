@@ -372,8 +372,8 @@ function toggleNotes(target) {
   if (!row || window.getSelection().toString()) return;
   const tradeId = +row.dataset.tradeId;
   const isAlreadyOpen = expandedTradeIds.has(tradeId);
-  expandedTradeIds.clear();
-  if (!expandedTradeIds.delete(tradeId)) expandedTradeIds.add(tradeId);
+  expandedTradeIds.clear();                    
+  if (!isAlreadyOpen) expandedTradeIds.add(tradeId); 
   renderJournal();
 }
 
