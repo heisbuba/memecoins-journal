@@ -36,17 +36,14 @@ async function callTradesApi(method, body, query = "") {
     throw new Error("offline");
   }
   if (response.status == 401) {
-    byId("app").style.display = "none";    
-    byId("lock-screen").style.display = "grid";  
+    byId("app").style.display = "none";
+    byId("lock-screen").style.display = "grid";
     byId("pin-input").focus();
     throw new Error("locked");
   }
   if (!response.ok) {
-    let detail = response.status;
-    try {
-      detail = (await response.json()).error || detail;
-    } catch (_) {}
-    throw new Error(detail);
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error || response.status);
   }
   return response.json();
 }
@@ -56,8 +53,8 @@ async function loadTrades() {
   try {
     trades = await callTradesApi("GET");
     setStatus(trades.length + " trades");
-    byId("lock-screen").style.display = "none"; 
-    byId("app").style.display = "block";  
+    byId("lock-screen").style.display = "none";
+    byId("app").style.display = "block";
   } catch (error) {
     if (error.message == "offline") {
       if (byId("app").style.display == "block") setStatus(OFFLINE_MESSAGE);
@@ -99,6 +96,7 @@ const groupHeaderRow = label =>
 
 const SEARCH_FIELDS = ["Ticker", "Strategy", "Tags", "Notes", "Review"];
 let searchTimer, searchQuery = "", sortColumn = "Date", sortDirection = -1, currentPage = 0, pageSize = 20, selectedPeriod = "all";
+const expandedTradeIds = new Set();
 
 // sort value of each table column
 const SORT_VALUE_GETTERS = {
@@ -261,11 +259,18 @@ function renderJournal() {
     ).join("")}<th></th></tr>` +
     pageEntries
       .map(({ trade, index, metrics }) => {
+        const isExpanded = expandedTradeIds.has(trade.id);
+        const notesRow = isExpanded
+          ? `<tr class="notes-row"><td colspan="${headerColumns.length + 1}"><div class="notes-text">${
+              trade.Notes ? escapeHtml(trade.Notes) : "<em>No notes for this trade.</em>"
+            }</div></td></tr>`
+          : "";
         return (
-          `<tr title="${escapeHtml((trade.Notes || "").slice(0, 400)).replace(/"/g, "&quot;")}">` +
+          `<tr class="trade-row${isExpanded ? " expanded" : ""}" data-trade-id="${trade.id}">` +
           headerColumns.map(column => cellFor(column, trade, metrics)).join("") +
           `<td><a href="#" data-index="${index}" class="edit-link" title="Edit">✎</a> ` +
-          `<a href="#" data-index="${index}" class="delete-link" title="Delete">✕</a></td></tr>`
+          `<a href="#" data-index="${index}" class="delete-link" title="Delete">✕</a></td></tr>` +
+          notesRow
         );
       })
       .join("");
@@ -362,6 +367,14 @@ byId("next-page-button").onclick = () => {
   renderJournal();
 };
 
+function toggleNotes(target) {
+  const row = target.closest("tr.trade-row");
+  if (!row || window.getSelection().toString()) return;
+  const tradeId = +row.dataset.tradeId;
+  if (!expandedTradeIds.delete(tradeId)) expandedTradeIds.add(tradeId);
+  renderJournal();
+}
+
 byId("trades-table").onclick = async event => {
   const header = event.target.closest && event.target.closest("th[data-column]");
   if (header) {
@@ -376,15 +389,15 @@ byId("trades-table").onclick = async event => {
     event.preventDefault();
     return startEdit(trades[+event.target.dataset.index]);
   }
-  if (!classes.contains("delete-link")) return;
+  if (!classes.contains("delete-link")) return toggleNotes(event.target);
   event.preventDefault();
   const trade = trades[+event.target.dataset.index];
   if (!confirm("Delete " + trade.Ticker + "?")) return;
   try {
     await callTradesApi("DELETE", null, "?id=" + trade.id);
     await loadTrades();
-  } catch (_) {
-    setStatus("Delete failed");
+  } catch (error) {
+    if (error.message != "locked") setStatus("Delete failed: " + error.message);
   }
 };
 
@@ -419,11 +432,8 @@ byId("unlock-button").onclick = async () => {
       loadTrades();
       return;
     }
-    let errorMessage = "";
-    try {
-      errorMessage = (await response.json()).error || "";
-    } catch (_) {}
-    lockError.textContent = errorMessage || ("Server error " + response.status + " - check D1 tables, DB binding and secrets");
+    const body = await response.json().catch(() => ({}));
+    lockError.textContent = body.error || "Server error " + response.status;
   } catch (error) {
     lockError.textContent = "Network error";
   }
@@ -438,8 +448,8 @@ byId("lock-button").onclick = async () => {
   trades = [];
   renderJournal();
   setStatus("");
-  byId("app").style.display = "none";    // Hide app
-  byId("lock-screen").style.display = "grid";   // Show lock
+  byId("app").style.display = "none";
+  byId("lock-screen").style.display = "grid";
 };
 
 const PERIOD_OPTIONS_HTML = `
