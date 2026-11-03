@@ -61,12 +61,16 @@ export async function onRequestPost({ env, request }) {
   const insertStatement = env.DB.prepare(
     `INSERT INTO trades (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")})`
   );
-  for (let i = 0; i < validTrades.length; i += 50) {
-    await env.DB.batch(
-      validTrades.slice(i, i + 50).map(trade =>
-        insertStatement.bind(...Object.keys(FIELD_TO_COLUMN).map(field => toDbValue(field, trade[field])))
-      )
-    );
+  try {
+    for (let i = 0; i < validTrades.length; i += 50) {
+      await env.DB.batch(
+        validTrades.slice(i, i + 50).map(trade =>
+          insertStatement.bind(...Object.keys(FIELD_TO_COLUMN).map(field => toDbValue(field, trade[field])))
+        )
+      );
+    }
+  } catch (error) {
+    return jsonResponse({ error: String(error.message || error) }, 500);
   }
   return jsonResponse({ added: validTrades.length });
 }
@@ -89,10 +93,14 @@ export async function onRequestPut({ env, request }) {
   const trade = requestBody.trade;
   if (!id || !trade || !trade.Date || !trade.Ticker) return jsonResponse({ error: "id and trade required" }, 400);
   const fields = Object.keys(FIELD_TO_COLUMN);
-  await env.DB.prepare(
-    `UPDATE trades SET ${fields.map(field => FIELD_TO_COLUMN[field] + "=?").join(",")} WHERE id=?`
-  )
-    .bind(...fields.map(field => toDbValue(field, trade[field])), id)
-    .run();
+  try {
+    await env.DB.prepare(
+      `UPDATE trades SET ${fields.map(field => FIELD_TO_COLUMN[field] + "=?").join(",")} WHERE id=?`
+    )
+      .bind(...fields.map(field => toDbValue(field, trade[field])), id)
+      .run();
+  } catch (error) {
+    return jsonResponse({ error: String(error.message || error) }, 500);
+  }
   return jsonResponse({ updated: id });
 }
