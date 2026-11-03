@@ -368,20 +368,12 @@ byId("next-page-button").onclick = () => {
 };
 
 function toggleNotes(target) {
-  const tradeRow = target.closest("tr.trade-row");
-  const notesRow = target.closest("tr.notes-row");
-  
-  // Find the row, whether they tapped the trade or the notes
-  const row = tradeRow || (notesRow && notesRow.previousElementSibling);
-  
-  if (!row || !row.classList.contains("trade-row")) return;
-
+  const row = target.closest("tr.trade-row");
+  if (!row || window.getSelection().toString()) return;
   const tradeId = +row.dataset.tradeId;
-  const isOpen = expandedTradeIds.has(tradeId);
-  
+  const isAlreadyOpen = expandedTradeIds.has(tradeId);
   expandedTradeIds.clear();
-  if (!isOpen) expandedTradeIds.add(tradeId);
-  
+  if (!expandedTradeIds.delete(tradeId)) expandedTradeIds.add(tradeId);
   renderJournal();
 }
 
