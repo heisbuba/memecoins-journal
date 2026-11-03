@@ -369,11 +369,29 @@ byId("next-page-button").onclick = () => {
 
 function toggleNotes(target) {
   const row = target.closest("tr.trade-row");
-  if (!row || window.getSelection().toString()) return;
-  const tradeId = +row.dataset.tradeId;
+  const notesRow = target.closest("tr.notes-row");
+  
+  if ((!row && !notesRow) || window.getSelection().toString()) return;
+  
+  let tradeId;
+  if (row) {
+    tradeId = +row.dataset.tradeId;
+  } else if (notesRow) {
+    const prevRow = notesRow.previousElementSibling;
+    if (prevRow && prevRow.classList.contains("trade-row")) {
+      tradeId = +prevRow.dataset.tradeId;
+    }
+  }
+  
+  if (!tradeId) return;
+
   const isAlreadyOpen = expandedTradeIds.has(tradeId);
-  expandedTradeIds.clear();
-  if (!expandedTradeIds.delete(tradeId)) expandedTradeIds.add(tradeId);
+  expandedTradeIds.clear(); 
+  
+  if (!isAlreadyOpen) {
+    expandedTradeIds.add(tradeId);
+  }
+  
   renderJournal();
 }
 
