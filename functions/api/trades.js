@@ -4,7 +4,8 @@ const FIELD_TO_COLUMN = {
   Ticker: "ticker",
   Strategy: "strategy",
   MC: "mc",
-  Price: "price",
+  "Entry Size": "entry_size",
+  Currency: "currency",
   "Entry Time": "entry_time",
   SL: "sl",
   TP: "tp",
@@ -17,6 +18,20 @@ const FIELD_TO_COLUMN = {
   Notes: "notes"
 };
 
+const CURRENCIES = ["USD", "NGN"];
+
+function toDbValue(field, value) {
+  if (field === "Entry Size") {
+    const amount = parseFloat(String(value ?? "").replace(/[^0-9.\-]/g, ""));
+    return Number.isFinite(amount) ? amount : null;
+  }
+  if (field === "Currency") {
+    const code = String(value ?? "").trim().toUpperCase();
+    return CURRENCIES.includes(code) ? code : "USD";
+  }
+  return String(value ?? "").slice(0, 20000);
+}
+
 const jsonResponse = (data, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
@@ -28,7 +43,7 @@ export async function onRequestGet({ env }) {
   return jsonResponse(
     results.map(row => {
       const trade = { id: row.id };
-      for (const field in FIELD_TO_COLUMN) trade[field] = row[FIELD_TO_COLUMN[field]] || "";
+      for (const field in FIELD_TO_COLUMN) trade[field] = row[FIELD_TO_COLUMN[field]] ?? "";
       return trade;
     })
   );
@@ -49,7 +64,7 @@ export async function onRequestPost({ env, request }) {
   for (let i = 0; i < validTrades.length; i += 50) {
     await env.DB.batch(
       validTrades.slice(i, i + 50).map(trade =>
-        insertStatement.bind(...Object.keys(FIELD_TO_COLUMN).map(field => String(trade[field] ?? "").slice(0, 20000)))
+        insertStatement.bind(...Object.keys(FIELD_TO_COLUMN).map(field => toDbValue(field, trade[field])))
       )
     );
   }
@@ -77,7 +92,7 @@ export async function onRequestPut({ env, request }) {
   await env.DB.prepare(
     `UPDATE trades SET ${fields.map(field => FIELD_TO_COLUMN[field] + "=?").join(",")} WHERE id=?`
   )
-    .bind(...fields.map(field => String(trade[field] ?? "").slice(0, 20000)), id)
+    .bind(...fields.map(field => toDbValue(field, trade[field])), id)
     .run();
   return jsonResponse({ updated: id });
 }
