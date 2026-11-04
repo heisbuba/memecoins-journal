@@ -504,3 +504,93 @@ th.sortable:hover {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Patterns page */
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: 1px solid var(--bd);
+  border-radius: 6px;
+  color: var(--pri);
+  font-weight: 600;
+  font-size: 14px;
+  min-height: 42px;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.button-link:hover {
+  background: rgba(128, 128, 128, 0.08);
+  border-color: var(--pri);
+}
+
+#patterns-app .card h3 {
+  font-size: 13px;
+  margin: 16px 0 8px;
+  color: var(--mut);
+  font-weight: 600;
+}
+
+#patterns-app .card h2 + h3,
+#patterns-app .card h2 + .table-scroll {
+  margin-top: 0;
+}
+
+#patterns-app .note-text {
+  font-size: 13px;
+  color: var(--mut);
+  margin: 10px 0 0;
+}
+
+#patterns-app .note-text strong {
+  color: var(--tx);
+}
+
+#patterns-message a {
+  color: var(--pri);
+  font-weight: 600;
+}
+
+.slice-table th:nth-child(n+2),
+.slice-table td:nth-child(n+2) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.slice-table tr.low-sample td {
+  opacity: 0.5;
+}
+
+.slice-table .empty-cell {
+  text-align: left;
+  color: var(--mut);
+  white-space: normal;
+}
+
+.pnl-bar-cell {
+  min-width: 110px;
+}
+
+.pnl-bar {
+  display: block;
+  height: 3px;
+  margin: 4px 0 0 auto;
+  border-radius: 2px;
+}
+
+.pnl-bar-positive {
+  background: var(--g);
+}
+
+.pnl-bar-negative {
+  background: var(--r);
+}
+
+@media (max-width: 640px) {
+  .button-link {
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+}
