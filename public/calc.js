@@ -129,3 +129,43 @@ const parseMarketCap = text => {
         (MARKET_CAP_UNITS[(match[2] || "").charAt(0).toLowerCase()] || 1)
     : null;
 };
+
+// calendar-window boundaries for the period selector
+function periodRange(period) {
+  if (period === "all") return null;
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const day = now.getDate();
+  const weekday = (now.getDay() + 6) % 7;             // Mon=0
+  const toIsoDate = date => date.toISOString().slice(0, 10);
+  const utcDate = (y, m, d) => new Date(Date.UTC(y, m, d));
+  switch (period) {
+    case "week":     return [toIsoDate(utcDate(year, month, day - weekday)),     toIsoDate(utcDate(year, month, day - weekday + 6))];
+    case "month":    return [toIsoDate(utcDate(year, month, 1)),                 toIsoDate(utcDate(year, month + 1, 0))];
+    case "quarter":  { const quarter = Math.floor(month / 3);
+                       return [toIsoDate(utcDate(year, quarter * 3, 1)),         toIsoDate(utcDate(year, quarter * 3 + 3, 0))]; }
+    case "year":     return [toIsoDate(utcDate(year, 0, 1)),                     toIsoDate(utcDate(year, 11, 31))];
+    case "lweek":    return [toIsoDate(utcDate(year, month, day - weekday - 7)), toIsoDate(utcDate(year, month, day - weekday - 1))];
+    case "lmonth":   return [toIsoDate(utcDate(year, month - 1, 1)),             toIsoDate(utcDate(year, month, 0))];
+    case "lquarter": { const quarter = Math.floor(month / 3) - 1;
+                       return [toIsoDate(utcDate(year, quarter * 3, 1)),         toIsoDate(utcDate(year, quarter * 3 + 3, 0))]; }
+    case "lyear":    return [toIsoDate(utcDate(year - 1, 0, 1)),                 toIsoDate(utcDate(year - 1, 11, 31))];
+  }
+  return null;
+}
+
+const PERIOD_OPTIONS_HTML = `
+  <option value="all">All time</option>
+  <optgroup label="Current">
+    <option value="week">This week</option>
+    <option value="month">This month</option>
+    <option value="quarter">This quarter</option>
+    <option value="year">This year</option>
+  </optgroup>
+  <optgroup label="Previous">
+    <option value="lweek">Last week</option>
+    <option value="lmonth">Last month</option>
+    <option value="lquarter">Last quarter</option>
+    <option value="lyear">Last year</option>
+  </optgroup>`;
