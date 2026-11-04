@@ -72,6 +72,72 @@ h2 {
 
 #lock-screen .card {
   width: 280px;
+  max-width: calc(100vw - 32px);
+}
+
+#lock-screen h2 {
+  text-align: center;
+}
+
+.lock-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: var(--pri);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.lock-brand svg {
+  flex-shrink: 0;
+}
+
+.pin-field {
+  position: relative;
+}
+
+.pin-field input {
+  padding-right: 48px;
+  letter-spacing: 0.2em;
+}
+
+#pin-toggle-button {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 44px;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--mut);
+}
+
+#lock-error {
+  min-height: 1.5em;
+  margin-top: 12px;
+  font-size: 14px;
+  text-align: center;
+}
+
+#lock-card.shake {
+  animation: pin-shake 0.4s ease;
+}
+
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #lock-card.shake {
+    animation: none;
+  }
 }
 
 #app {
