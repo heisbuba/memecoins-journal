@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Patterns - Memes Trading Journal</title>
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Memes Journal">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main id="patterns-app">
+    <header class="topbar">
+      <h1>Patterns <span id="status-text"></span></h1>
+      <div class="topbar-controls">
+        <a class="button-link" href="/">Journal</a>
+        <button class="secondary" id="reload-button" type="button">Reload</button>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="form-grid">
+        <div>
+          <label for="period-select">Period</label>
+          <select id="period-select"></select>
+        </div>
+        <div>
+          <label for="strategy-filter">Strategy</label>
+          <select id="strategy-filter"></select>
+        </div>
+        <div>
+          <label for="review-filter">Review</label>
+          <select id="review-filter">
+            <option value="">All reviews</option>
+            <option value="Plan">Plan</option>
+            <option value="Mistake">Mistake</option>
+            <option value="Unplanned">Unplanned</option>
+          </select>
+        </div>
+        <div>
+          <label for="min-market-cap-filter">Min entry MC</label>
+          <input id="min-market-cap-filter" type="text" inputmode="text" placeholder="e.g. 50k">
+        </div>
+        <div>
+          <label for="max-market-cap-filter">Max entry MC</label>
+          <input id="max-market-cap-filter" type="text" inputmode="text" placeholder="e.g. 1M">
+        </div>
+        <div>
+          <label for="min-sample-input">Min trades per row</label>
+          <input id="min-sample-input" type="number" min="1" step="1" value="10">
+        </div>
+      </div>
+      <div class="note-text" id="filter-note"></div>
+    </div>
+
+    <div class="card" id="patterns-message" hidden></div>
+
+    <div id="patterns-content" hidden>
+      <div class="card">
+        <h2>Overview</h2>
+        <div class="stats-grid" id="overview-stats"></div>
+      </div>
+
+      <div class="card">
+        <h2>Strategy leaderboard</h2>
+        <div class="table-scroll"><table class="slice-table" id="strategy-table"></table></div>
+      </div>
+
+      <div class="two-column">
+        <div class="card">
+          <h2>Time of day</h2>
+          <div class="table-scroll"><table class="slice-table" id="time-of-day-table"></table></div>
+        </div>
+        <div class="card">
+          <h2>Weekday</h2>
+          <div class="table-scroll"><table class="slice-table" id="weekday-table"></table></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Entry hour</h2>
+        <div class="table-scroll"><table class="slice-table" id="hour-table"></table></div>
+      </div>
+
+      <div class="card">
+        <h2>Market cap</h2>
+        <div class="note-text" id="market-cap-headline"></div>
+        <h3>Winners vs losers</h3>
+        <div class="table-scroll"><table class="slice-table" id="market-cap-compare-table"></table></div>
+        <h3>Entry market cap buckets</h3>
+        <div class="table-scroll"><table class="slice-table" id="market-cap-bucket-table"></table></div>
+      </div>
+
+      <div class="card">
+        <h2>Review and tags</h2>
+        <h3>Review</h3>
+        <div class="table-scroll"><table class="slice-table" id="review-table"></table></div>
+        <div class="note-text" id="review-impact"></div>
+        <h3>Tags</h3>
+        <div class="note-text" id="tag-highlights"></div>
+        <div class="table-scroll"><table class="slice-table" id="tag-table"></table></div>
+        <h3>Words in notes</h3>
+        <div class="table-scroll"><table class="slice-table" id="keyword-table"></table></div>
+      </div>
+
+      <div class="card">
+        <h2>Risk discipline</h2>
+        <div class="stats-grid" id="risk-stats"></div>
+        <div class="two-column">
+          <div>
+            <h3>Stop-loss size</h3>
+            <div class="table-scroll"><table class="slice-table" id="stop-loss-table"></table></div>
+          </div>
+          <div>
+            <h3>Hold time</h3>
+            <div class="table-scroll"><table class="slice-table" id="hold-table"></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/calc.js"></script>
+  <script src="/patterns-engine.js"></script>
+  <script src="/patterns.js"></script>
+</body>
+</html>
