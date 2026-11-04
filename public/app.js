@@ -395,29 +395,65 @@ byId("export-csv-button").onclick = () =>
     "text/csv"
   );
 
-byId("unlock-button").onclick = async () => {
+const pinInput = byId("pin-input");
+const unlockButton = byId("unlock-button");
+const pinToggleButton = byId("pin-toggle-button");
+
+function setUnlocking(isUnlocking) {
+  unlockButton.disabled = isUnlocking;
+  unlockButton.textContent = isUnlocking ? "Unlocking…" : "Unlock";
+}
+
+function setPinVisible(isVisible) {
+  pinInput.type = isVisible ? "text" : "password";
+  byId("pin-show-icon").hidden = isVisible;
+  byId("pin-hide-icon").hidden = !isVisible;
+  pinToggleButton.setAttribute("aria-pressed", isVisible);
+  pinToggleButton.setAttribute("aria-label", isVisible ? "Hide PIN" : "Show PIN");
+}
+
+function shakeLockCard() {
+  const lockCard = byId("lock-card");
+  lockCard.classList.remove("shake");
+  void lockCard.offsetWidth; // restart the animation
+  lockCard.classList.add("shake");
+}
+
+unlockButton.onclick = async () => {
   const lockError = byId("lock-error");
   lockError.textContent = "";
+  setUnlocking(true);
   try {
     const response = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin: byId("pin-input").value })
+      body: JSON.stringify({ pin: pinInput.value })
     });
     if (response.ok) {
-      byId("pin-input").value = "";
+      pinInput.value = "";
+      setPinVisible(false);
       loadTrades();
       return;
     }
     const body = await response.json().catch(() => ({}));
     lockError.textContent = body.error || "Server error " + response.status;
+    if (response.status == 401) {
+      pinInput.value = "";
+      pinInput.focus();
+      shakeLockCard();
+    }
   } catch (error) {
     lockError.textContent = "Network error";
+  } finally {
+    setUnlocking(false);
   }
 };
 
-byId("pin-input").onkeydown = event => {
-  if (event.key == "Enter") byId("unlock-button").click();
+pinToggleButton.onmousedown = event => event.preventDefault(); // keep the keyboard open
+pinToggleButton.onclick = () => setPinVisible(pinInput.type == "password");
+
+pinInput.onkeydown = event => {
+  if (event.key == "Enter") unlockButton.click();
 };
 
 byId("lock-button").onclick = async () => {
@@ -427,6 +463,7 @@ byId("lock-button").onclick = async () => {
   setStatus("");
   byId("app").style.display = "none";
   byId("lock-screen").style.display = "grid";
+  setPinVisible(false);
 };
 
 const periodSelect = byId("period-select");
