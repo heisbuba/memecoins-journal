@@ -71,27 +71,43 @@ h2 {
 }
 
 #lock-screen .card {
-  width: 280px;
+  width: 320px;
   max-width: calc(100vw - 32px);
+  padding: 28px 24px 24px;
+  margin: 0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
 }
 
-#lock-screen h2 {
+.lock-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 20px;
   text-align: center;
 }
 
-.lock-brand {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 16px;
+.lock-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: rgba(128, 128, 128, 0.12);
+  background: color-mix(in srgb, var(--pri) 12%, transparent);
   color: var(--pri);
-  font-size: 18px;
-  font-weight: 700;
 }
 
-.lock-brand svg {
-  flex-shrink: 0;
+.lock-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.lock-subtitle {
+  font-size: 14px;
+  color: var(--mut);
 }
 
 .pin-field {
@@ -99,20 +115,30 @@ h2 {
 }
 
 .pin-field input {
-  padding-right: 48px;
-  letter-spacing: 0.2em;
+  padding: 8px 44px;
+  font-size: 20px;
+  letter-spacing: 0.3em;
+  text-align: center;
 }
 
 #pin-toggle-button {
   position: absolute;
-  top: 1px;
-  right: 1px;
-  bottom: 1px;
+  top: 0;
+  right: 0;
+  flex: none;
   width: 44px;
+  height: 100%;
+  min-width: 0;
   min-height: 0;
   padding: 0;
+  border: 0;
   background: transparent;
   color: var(--mut);
+}
+
+#unlock-button {
+  width: 100%;
+  margin-top: 16px;
 }
 
 #lock-error {
