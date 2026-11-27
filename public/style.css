@@ -141,6 +141,25 @@ h2 {
   margin-top: 16px;
 }
 
+.lock-source {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  font-size: 13px;
+  color: var(--mut);
+  text-decoration: none;
+}
+
+.lock-source:hover {
+  color: var(--pri);
+}
+
 #lock-error {
   min-height: 1.5em;
   margin-top: 12px;
