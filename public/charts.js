@@ -1,5 +1,6 @@
 const CHART_SLOTS = [["before", "Before"], ["after", "After"]];
-const MAX_CHART_EDGE = 2400;
+const MAX_CHART_BYTES = 5 * 1024 * 1024;
+const CHART_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const chartElement = id => document.getElementById(id);
 const chartUrl = key => "/api/images?key=" + encodeURIComponent(key);
 
@@ -16,20 +17,6 @@ function chartSlotsHtml(trade) {
       `<a href="#" data-chart-action="remove" data-slot="${slot}">remove</a></figcaption></figure>`
     );
   }).join("")}</div>`;
-}
-
-// downscale and re-encode as WebP (JPEG where WebP encoding is unsupported)
-async function compressChart(file) {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_CHART_EDGE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  const encode = type => new Promise(resolve => canvas.toBlob(resolve, type, 0.85));
-  const webp = await encode("image/webp");
-  return webp && webp.type == "image/webp" ? webp : encode("image/jpeg");
 }
 
 async function sendChart(method, tradeId, slot, image) {
@@ -50,7 +37,11 @@ async function sendChart(method, tradeId, slot, image) {
   }
 }
 
-const uploadChart = async (tradeId, slot, file) => sendChart("PUT", tradeId, slot, await compressChart(file));
+function uploadChart(tradeId, slot, file) {
+  if (!CHART_TYPES.includes(file.type)) throw new Error("use a PNG, JPEG or WebP image");
+  if (file.size > MAX_CHART_BYTES) throw new Error("image must be under 5 MB");
+  return sendChart("PUT", tradeId, slot, file);
+}
 const removeChart = (tradeId, slot) => sendChart("DELETE", tradeId, slot);
 
 let lightboxTrade = null;
