@@ -1,1 +1,27 @@
-CREATE TABLE trades( id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, ticker TEXT, strategy TEXT, mc TEXT, entry_time TEXT, sl TEXT, tp TEXT, rrr TEXT, pnl TEXT, exit_time TEXT, review TEXT, tags TEXT, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP , exit_mc TEXT, entry_size REAL, currency TEXT DEFAULT 'NGN', after_image TEXT, before_image TEXT)
+CREATE TABLE IF NOT EXISTS trades (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT,
+  ticker TEXT,
+  strategy TEXT,
+  mc TEXT,
+  entry_time TEXT,
+  sl TEXT,
+  tp TEXT,
+  rrr TEXT,
+  pnl TEXT,
+  exit_time TEXT,
+  review TEXT,
+  tags TEXT,
+  notes TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  exit_mc TEXT,
+  entry_size REAL,
+  currency TEXT DEFAULT 'NGN',
+  after_image TEXT,
+  before_image TEXT
+);
+
+CREATE TABLE IF NOT EXISTS login_attempts (
+  ip TEXT,
+  ts INTEGER
+);
