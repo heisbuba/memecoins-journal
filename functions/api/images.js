@@ -1,8 +1,8 @@
 // Cloudflare Pages Function: /api/images (R2 binding: BUCKET)
 const SLOT_COLUMN = { before: "before_image", after: "after_image" };
-const EXTENSIONS = { "image/webp": "webp", "image/jpeg": "jpg" };
+const EXTENSIONS = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 const MAX_BYTES = 5 * 1024 * 1024;
-const KEY_PATTERN = /^trades\/\d+\/(before|after)-\d+\.(webp|jpg)$/;
+const KEY_PATTERN = /^trades\/\d+\/(before|after)-\d+\.(png|jpg|webp)$/;
 
 const jsonResponse = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -46,7 +46,7 @@ export const onRequestPut = guarded(async ({ env, request }) => {
   const target = readTarget(request);
   const contentType = request.headers.get("Content-Type");
   const extension = EXTENSIONS[contentType];
-  if (!target || !extension) return jsonResponse({ error: "id, slot and a webp/jpeg image required" }, 400);
+  if (!target || !extension) return jsonResponse({ error: "id, slot and a png, jpeg or webp image required" }, 400);
 
   const bytes = await request.arrayBuffer();
   if (!bytes.byteLength || bytes.byteLength > MAX_BYTES) return jsonResponse({ error: "image must be under 5 MB" }, 413);
