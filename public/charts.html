@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Charts - Memes Trading Journal</title>
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Memes Journal">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main id="charts-app">
+    <header class="topbar">
+      <h1>Charts <span id="status-text"></span></h1>
+      <div class="topbar-controls">
+        <a class="button-link" href="/">Journal</a>
+        <a class="button-link" href="/patterns">Patterns</a>
+        <button class="secondary" id="reload-button" type="button">Reload</button>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="form-grid">
+        <div>
+          <label for="search-input">Search</label>
+          <input id="search-input" placeholder="Ticker, strategy, tags, notes">
+        </div>
+        <div>
+          <label for="show-filter">Show</label>
+          <select id="show-filter">
+            <option value="with">With charts</option>
+            <option value="both">Both charts</option>
+            <option value="nobefore">Missing before</option>
+            <option value="noafter">Missing after</option>
+            <option value="none">No charts</option>
+            <option value="all">All trades</option>
+          </select>
+        </div>
+        <div>
+          <label for="sort-select">Sort</label>
+          <select id="sort-select">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="best">Best PnL</option>
+            <option value="worst">Worst PnL</option>
+          </select>
+        </div>
+      </div>
+      <details class="more-filters" id="more-filters">
+        <summary>More filters</summary>
+        <div class="form-grid">
+          <div>
+            <label for="period-select">Period</label>
+            <select id="period-select"></select>
+          </div>
+          <div>
+            <label for="strategy-filter">Strategy</label>
+            <select id="strategy-filter"></select>
+          </div>
+          <div>
+            <label for="result-filter">Result</label>
+            <select id="result-filter">
+              <option value="">All results</option>
+              <option value="Win">Win</option>
+              <option value="Loss">Loss</option>
+              <option value="BE">BE</option>
+              <option value="Open">Open</option>
+            </select>
+          </div>
+          <div>
+            <label for="review-filter">Review</label>
+            <select id="review-filter">
+              <option value="">All reviews</option>
+              <option value="Plan">Plan</option>
+              <option value="Mistake">Mistake</option>
+              <option value="Unplanned">Unplanned</option>
+            </select>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div class="card" id="charts-message" hidden></div>
+
+    <div id="charts-content" hidden>
+      <div class="chart-grid" id="charts-grid"></div>
+      <div class="pagination">
+        <button class="secondary" id="prev-page-button" type="button">‹ Prev</button>
+        <span id="page-info"></span>
+        <button class="secondary" id="next-page-button" type="button">Next ›</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="/calc.js"></script>
+  <script src="/charts.js"></script>
+  <script src="/charts-browser.js"></script>
+</body>
+</html>

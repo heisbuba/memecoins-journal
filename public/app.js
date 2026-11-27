@@ -218,6 +218,8 @@ function renderJournal() {
 
   const pageStart = currentPage * pageSize;
   const pageEntries = matchingEntries.slice(pageStart, pageStart + pageSize);
+  const visibleIds = new Set(pageEntries.map(({ trade }) => trade.id));
+  expandedTradeIds.forEach(id => visibleIds.has(id) || expandedTradeIds.delete(id));
 
   byId("page-info").textContent =
     (matchingEntries.length ? pageStart + 1 + "–" + (pageStart + pageEntries.length) : "0") +
@@ -353,40 +355,11 @@ function toggleNotes(target) {
   renderJournal();
 }
 
-let pendingChart = null;
-const chartFileInput = byId("chart-file-input");
-
-async function changeChart(action, doneMessage) {
-  setStatus("Saving chart...");
-  try {
-    await action();
-    await loadTrades();
-    setStatus(doneMessage);
-  } catch (error) {
-    if (error.message == "locked") return loadTrades();
-    setStatus("Chart failed: " + error.message);
-  }
-}
-
-function handleChartAction(button) {
-  const tradeId = +button.closest("tr.notes-row").dataset.tradeId;
-  const { chartAction, slot } = button.dataset;
-  if (chartAction == "view") return openLightbox(trades.find(trade => trade.id == tradeId), slot);
-  if (chartAction == "remove") {
-    if (confirm("Remove the " + slot + " chart?")) changeChart(() => removeChart(tradeId, slot), "Chart removed ✓");
-    return;
-  }
-  pendingChart = { tradeId, slot };
-  chartFileInput.click();
-}
-
-chartFileInput.onchange = () => {
-  const file = chartFileInput.files[0];
-  chartFileInput.value = "";
-  if (!file || !pendingChart) return;
-  const { tradeId, slot } = pendingChart;
-  changeChart(() => uploadChart(tradeId, slot, file), "Chart saved ✓");
-};
+const chartActions = createChartActions({
+  findTrade: id => trades.find(trade => trade.id == id),
+  reload: loadTrades,
+  setStatus
+});
 
 // paste a screenshot into the open trade: fills Before first, then After
 document.addEventListener("paste", event => {
@@ -396,7 +369,7 @@ document.addEventListener("paste", event => {
   const slot = !trade.beforeChart ? "before" : !trade.afterChart ? "after" : null;
   if (!slot) return setStatus("Both charts are set. Use replace.");
   event.preventDefault();
-  changeChart(() => uploadChart(trade.id, slot, file), "Chart saved ✓");
+  chartActions.change(() => uploadChart(trade.id, slot, file), "Chart saved ✓");
 });
 
 byId("trades-table").onclick = async event => {
@@ -411,7 +384,7 @@ byId("trades-table").onclick = async event => {
   const chartButton = event.target.closest("[data-chart-action]");
   if (chartButton) {
     event.preventDefault();
-    return handleChartAction(chartButton);
+    return chartActions.handle(chartButton, +chartButton.closest("tr.notes-row").dataset.tradeId);
   }
   const classes = event.target.classList;
   if (classes.contains("edit-link")) {
