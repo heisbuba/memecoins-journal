@@ -1,7 +1,7 @@
 // Pattern analysis engine: pure functions, no DOM.
 // Needs calc.js loaded first (calculateTrade, parseMarketCap, timeToMinutes, sum, average).
 
-const DEFAULT_MIN_SAMPLE = 10;
+const DEFAULT_MIN_SAMPLE = 5;
 const UNKNOWN_LABEL = "Unknown";
 const NO_VALUE_LABEL = "(none)";
 const NO_STOP_LABEL = "No SL";
@@ -35,15 +35,6 @@ const STOP_LOSS_BUCKETS = [
   { label: "50%+", max: Infinity }
 ];
 const bucketLabels = buckets => buckets.map(bucket => bucket.label);
-
-const NOTE_STOP_WORDS = new Set(
-  ("the and for that this with was were are but not you your have has had from they them then than into out " +
-    "its it's just got get too very can could would should about after before again all any because been " +
-    "being both did does doing down during each few more most other our own same she him her his how " +
-    "what when where which while who why will won't also over under until only once here there these those " +
-    "some such off one two still like need needed want wanted")
-    .split(" ")
-);
 
 const finiteOrNull = value => (Number.isFinite(value) ? value : null);
 const averageOrNull = values => (values.length ? average(values) : null);
@@ -154,33 +145,15 @@ function filterEntries(entries, filters = {}) {
 function summarizeEntries(entries, minSample = DEFAULT_MIN_SAMPLE) {
   const count = entries.length;
   const pnls = entries.map(entry => entry.metrics.pnl);
-  const winnerPnls = entries.filter(entry => entry.metrics.result === "Win").map(entry => entry.metrics.pnl);
-  const loserPnls = entries.filter(entry => entry.metrics.result === "Loss").map(entry => entry.metrics.pnl);
-  const rMultiples = entries.map(entry => entry.metrics.rMultiple).filter(value => value != null);
+  const wins = entries.filter(entry => entry.metrics.result === "Win").length;
   const totalPnl = sum(pnls);
-  const grossWin = sum(winnerPnls);
-  const grossLoss = Math.abs(sum(loserPnls));
-  const averageWin = averageOrNull(winnerPnls);
-  const averageLoss = averageOrNull(loserPnls);
-  const bestPnl = count ? Math.max(...pnls) : null;
   return {
     count,
-    wins: winnerPnls.length,
-    losses: loserPnls.length,
-    breakEven: count - winnerPnls.length - loserPnls.length,
-    winRate: count ? winnerPnls.length / count : null,
-    winRateRange: wilsonInterval(winnerPnls.length, count),
+    winRate: count ? wins / count : null,
+    winRateRange: wilsonInterval(wins, count),
     totalPnl,
     averagePnl: averageOrNull(pnls),
-    medianPnl: medianOf(pnls),
-    averageWin,
-    averageLoss,
-    payoffRatio: averageWin != null && averageLoss ? averageWin / Math.abs(averageLoss) : null,
-    profitFactor: grossLoss ? grossWin / grossLoss : null,
-    averageR: averageOrNull(rMultiples),
-    bestPnl,
-    worstPnl: count ? Math.min(...pnls) : null,
-    pnlWithoutBest: count > 1 ? totalPnl - bestPnl : null,
+    pnlWithoutBest: count > 1 ? totalPnl - Math.max(...pnls) : null,
     lowSample: count < minSample
   };
 }
@@ -196,11 +169,7 @@ function groupEntries(entries, keyOf, options = {}) {
       groups.get(key).push(entry);
     });
   });
-  const grandTotal = sum(entries.map(entry => entry.metrics.pnl));
-  const rows = [...groups].map(([label, members]) => {
-    const summary = summarizeEntries(members, minSample);
-    return { label, entries: members, summary, shareOfTotal: grandTotal > 0 ? summary.totalPnl / grandTotal : null };
-  });
+  const rows = [...groups].map(([label, members]) => ({ label, summary: summarizeEntries(members, minSample) }));
   if (order) {
     const position = label => (order.includes(label) ? order.indexOf(label) : order.length);
     rows.sort((a, b) => position(a.label) - position(b.label) || a.label.localeCompare(b.label));
@@ -212,100 +181,41 @@ function groupEntries(entries, keyOf, options = {}) {
   return rows;
 }
 
-function countBy(entries, keyOf) {
-  const counts = {};
-  entries.forEach(entry => {
-    const key = keyOf(entry);
-    counts[key] = (counts[key] || 0) + 1;
-  });
-  return counts;
-}
-
-function describeMarketCaps(entries) {
-  const entryCaps = entries.map(entry => entry.entryMarketCap).filter(value => value != null);
-  const multiples = entries.map(entry => entry.marketCapMultiple).filter(value => value != null);
-  return {
-    count: entryCaps.length,
-    averageEntry: averageOrNull(entryCaps),
-    medianEntry: medianOf(entryCaps),
-    multipleCount: multiples.length,
-    averageMultiple: averageOrNull(multiples),
-    medianMultiple: medianOf(multiples)
-  };
-}
+const medianEntryMarketCap = entries =>
+  medianOf(entries.map(entry => entry.entryMarketCap).filter(value => value != null));
 
 function buildMarketCapStudy(entries, minSample) {
-  const buckets = groupEntries(entries, entry => entry.marketCapBucket, {
-    order: [...bucketLabels(MARKET_CAP_BUCKETS), UNKNOWN_LABEL],
-    minSample
-  });
-  const ranked = buckets
-    .filter(row => row.label !== UNKNOWN_LABEL && !row.summary.lowSample)
-    .sort((a, b) => b.summary.averagePnl - a.summary.averagePnl);
   return {
-    winners: describeMarketCaps(entries.filter(entry => entry.metrics.result === "Win")),
-    losers: describeMarketCaps(entries.filter(entry => entry.metrics.result === "Loss")),
-    all: describeMarketCaps(entries),
-    buckets,
-    bestBucket: ranked[0] || null,
-    worstBucket: ranked.length > 1 ? ranked[ranked.length - 1] : null
+    buckets: groupEntries(entries, entry => entry.marketCapBucket, {
+      order: [...bucketLabels(MARKET_CAP_BUCKETS), UNKNOWN_LABEL],
+      minSample
+    }),
+    winnersMedianEntry: medianEntryMarketCap(entries.filter(entry => entry.metrics.result === "Win")),
+    losersMedianEntry: medianEntryMarketCap(entries.filter(entry => entry.metrics.result === "Loss"))
   };
 }
 
 function buildTagStudy(entries, minSample) {
-  const rows = groupEntries(entries, entry => entry.tags, { minSample })
-    .map(row => ({ ...row, reviewCounts: countBy(row.entries, entry => entry.review) }))
-    .sort((a, b) => b.summary.count - a.summary.count || a.label.localeCompare(b.label));
-  const mostUsed = rows.slice(0, 5);
-  const leastUsed = rows.slice(5).reverse().slice(0, 5);
   return {
-    rows,
-    mostUsed,
-    leastUsed,
+    rows: groupEntries(entries, entry => entry.tags, { minSample }),
     taggedCount: entries.filter(entry => entry.tags.length).length,
     untaggedCount: entries.filter(entry => !entry.tags.length).length
   };
 }
 
-function buildKeywordRows(entries, minSample, minTrades = 2, limit = 15) {
-  const wordsOf = entry =>
-    [...new Set(String(entry.trade.Notes ?? "").toLowerCase().match(/\p{L}[\p{L}'-]{2,}/gu) || [])].filter(
-      word => !NOTE_STOP_WORDS.has(word)
-    );
-  return groupEntries(entries, wordsOf, { minSample })
-    .filter(row => row.summary.count >= minTrades)
-    .sort((a, b) => b.summary.count - a.summary.count || a.label.localeCompare(b.label))
-    .slice(0, limit);
-}
-
-function describeHold(entries) {
-  const hours = entries.map(entry => entry.metrics.holdHours).filter(value => value != null);
-  return { count: hours.length, average: averageOrNull(hours), median: medianOf(hours) };
-}
+const medianHold = entries =>
+  medianOf(entries.map(entry => entry.metrics.holdHours).filter(value => value != null));
 
 function buildRiskStudy(entries) {
-  const withStop = entries.filter(entry => entry.metrics.stopLoss);
-  const losersWithStop = withStop.filter(entry => entry.metrics.result === "Loss");
+  const losersWithStop = entries.filter(entry => entry.metrics.stopLoss && entry.metrics.result === "Loss");
   const stopBreaks = losersWithStop.filter(entry => entry.metrics.slExcess < 0);
-  const rOf = result =>
-    averageOrNull(
-      entries.filter(entry => entry.metrics.result === result && entry.metrics.rMultiple != null)
-        .map(entry => entry.metrics.rMultiple)
-    );
   return {
-    tradesWithStop: withStop.length,
     losersWithStop: losersWithStop.length,
     stopBreaks: stopBreaks.length,
     stopBreakRate: losersWithStop.length ? stopBreaks.length / losersWithStop.length : null,
     totalSlExcess: sum(stopBreaks.map(entry => entry.metrics.slExcess)),
-    averageSlExcess: averageOrNull(stopBreaks.map(entry => entry.metrics.slExcess)),
-    plannedRiskReward: averageOrNull(
-      entries.map(entry => entry.metrics.riskReward).filter(value => value != null)
-    ),
-    winnerR: rOf("Win"),
-    loserR: rOf("Loss"),
-    holdWinners: describeHold(entries.filter(entry => entry.metrics.result === "Win")),
-    holdLosers: describeHold(entries.filter(entry => entry.metrics.result === "Loss"))
+    holdWinners: medianHold(entries.filter(entry => entry.metrics.result === "Win")),
+    holdLosers: medianHold(entries.filter(entry => entry.metrics.result === "Loss"))
   };
 }
 
@@ -319,15 +229,41 @@ function buildReviewImpact(entries) {
     mistakePnl: pnlOf("Mistake"),
     unplannedCount: countOf("Unplanned"),
     unplannedPnl: pnlOf("Unplanned"),
-    planCount: countOf("Plan"),
-    planPnl: pnlOf("Plan"),
     withoutMistakes: totalPnl - pnlOf("Mistake")
   };
 }
 
+// best and weakest rows that have enough trades and a clear sign
+function extremesOf(group, rows) {
+  const ranked = rows
+    .filter(row => !row.summary.lowSample && ![UNKNOWN_LABEL, NO_VALUE_LABEL].includes(row.label))
+    .sort((a, b) => b.summary.totalPnl - a.summary.totalPnl);
+  if (!ranked.length) return null;
+  const best = ranked[0].summary.totalPnl > 0 ? ranked[0] : null;
+  const last = ranked[ranked.length - 1];
+  const worst = last !== best && last.summary.totalPnl < 0 ? last : null;
+  return best || worst ? { type: "extremes", group, best, worst } : null;
+}
+
+function buildFindings(report) {
+  const findings = [
+    extremesOf("Strategy", report.strategies),
+    extremesOf("Time of day", report.timeOfDay),
+    extremesOf("Weekday", report.weekdays),
+    extremesOf("Entry market cap", report.marketCap.buckets)
+  ].filter(Boolean);
+  const impact = report.reviewImpact;
+  if (impact.mistakeCount && impact.mistakePnl < 0) findings.push({ type: "mistakes", ...impact });
+  const { totalPnl, pnlWithoutBest } = report.overview;
+  if (totalPnl > 0 && pnlWithoutBest != null && pnlWithoutBest <= 0) {
+    findings.push({ type: "outlier", totalPnl, pnlWithoutBest });
+  }
+  return findings;
+}
+
 // every report the patterns page shows, for one filtered set of entries
 function buildPatternsReport(entries, minSample = DEFAULT_MIN_SAMPLE) {
-  return {
+  const report = {
     overview: summarizeEntries(entries, minSample),
     strategies: groupEntries(entries, entry => entry.strategy, { minSample }),
     timeOfDay: groupEntries(entries, entry => entry.timeOfDay, {
@@ -340,7 +276,6 @@ function buildPatternsReport(entries, minSample = DEFAULT_MIN_SAMPLE) {
     reviews: groupEntries(entries, entry => entry.review, { order: [...REVIEW_LABELS, NO_VALUE_LABEL], minSample }),
     reviewImpact: buildReviewImpact(entries),
     tags: buildTagStudy(entries, minSample),
-    keywords: buildKeywordRows(entries, minSample),
     risk: buildRiskStudy(entries),
     stopLossBuckets: groupEntries(entries, entry => entry.stopLossBucket, {
       order: [...bucketLabels(STOP_LOSS_BUCKETS), NO_STOP_LABEL],
@@ -351,4 +286,5 @@ function buildPatternsReport(entries, minSample = DEFAULT_MIN_SAMPLE) {
       minSample
     })
   };
+  return { ...report, findings: buildFindings(report) };
 }
