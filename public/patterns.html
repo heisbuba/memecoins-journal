@@ -45,83 +45,92 @@
             <option value="Unplanned">Unplanned</option>
           </select>
         </div>
-        <div>
-          <label for="min-market-cap-filter">Min entry MC</label>
-          <input id="min-market-cap-filter" type="text" inputmode="text" placeholder="e.g. 50k">
-        </div>
-        <div>
-          <label for="max-market-cap-filter">Max entry MC</label>
-          <input id="max-market-cap-filter" type="text" inputmode="text" placeholder="e.g. 1M">
-        </div>
-        <div>
-          <label for="min-sample-input">Min trades per row</label>
-          <input id="min-sample-input" type="number" min="1" step="1" value="10">
-        </div>
       </div>
+      <details class="more-filters">
+        <summary>More filters</summary>
+        <div class="form-grid">
+          <div>
+            <label for="min-market-cap-filter">Min entry MC</label>
+            <input id="min-market-cap-filter" type="text" inputmode="text" placeholder="e.g. 50k">
+          </div>
+          <div>
+            <label for="max-market-cap-filter">Max entry MC</label>
+            <input id="max-market-cap-filter" type="text" inputmode="text" placeholder="e.g. 1M">
+          </div>
+          <div>
+            <label for="min-sample-input">Min trades per row</label>
+            <input id="min-sample-input" type="number" min="1" step="1" value="5">
+          </div>
+        </div>
+      </details>
       <div class="note-text" id="filter-note"></div>
     </div>
 
     <div class="card" id="patterns-message" hidden></div>
 
     <div id="patterns-content" hidden>
+      <div class="stats-grid" id="overview-stats"></div>
+
       <div class="card">
-        <h2>Overview</h2>
-        <div class="stats-grid" id="overview-stats"></div>
+        <h2>Key findings</h2>
+        <div id="findings"></div>
       </div>
 
       <div class="card">
-        <h2>Strategy leaderboard</h2>
+        <h2>Strategy</h2>
+        <div id="strategy-chart"></div>
         <div class="table-scroll"><table class="slice-table" id="strategy-table"></table></div>
       </div>
 
-      <div class="two-column">
-        <div class="card">
-          <h2>Time of day</h2>
-          <div class="table-scroll"><table class="slice-table" id="time-of-day-table"></table></div>
+      <div class="card">
+        <h2>When you trade</h2>
+        <div class="toggle-bar">
+          <div class="toggle-group" id="when-slices">
+            <button type="button" class="secondary toggle-button active" data-value="timeOfDay">Time of day</button>
+            <button type="button" class="secondary toggle-button" data-value="weekdays">Weekday</button>
+            <button type="button" class="secondary toggle-button" data-value="hours">Entry hour</button>
+          </div>
+          <div class="toggle-group" id="when-views">
+            <button type="button" class="secondary toggle-button active" data-value="chart">Chart</button>
+            <button type="button" class="secondary toggle-button" data-value="table">Table</button>
+          </div>
         </div>
-        <div class="card">
-          <h2>Weekday</h2>
-          <div class="table-scroll"><table class="slice-table" id="weekday-table"></table></div>
+        <div class="toggle-group" id="when-metrics">
+          <button type="button" class="secondary toggle-button active" data-value="total">Total PnL</button>
+          <button type="button" class="secondary toggle-button" data-value="win">Win %</button>
+          <button type="button" class="secondary toggle-button" data-value="average">Avg PnL</button>
+          <button type="button" class="secondary toggle-button" data-value="count">Trades</button>
         </div>
+        <div id="when-content"></div>
       </div>
 
       <div class="card">
-        <h2>Entry hour</h2>
-        <div class="table-scroll"><table class="slice-table" id="hour-table"></table></div>
-      </div>
-
-      <div class="card">
-        <h2>Market cap</h2>
-        <div class="note-text" id="market-cap-headline"></div>
-        <h3>Winners vs losers</h3>
-        <div class="table-scroll"><table class="slice-table" id="market-cap-compare-table"></table></div>
-        <h3>Entry market cap buckets</h3>
-        <div class="table-scroll"><table class="slice-table" id="market-cap-bucket-table"></table></div>
+        <h2>Market cap at entry</h2>
+        <div id="market-cap-chart"></div>
+        <div class="note-text" id="market-cap-note"></div>
       </div>
 
       <div class="card">
         <h2>Review and tags</h2>
         <h3>Review</h3>
-        <div class="table-scroll"><table class="slice-table" id="review-table"></table></div>
+        <div id="review-chart"></div>
         <div class="note-text" id="review-impact"></div>
         <h3>Tags</h3>
-        <div class="note-text" id="tag-highlights"></div>
-        <div class="table-scroll"><table class="slice-table" id="tag-table"></table></div>
-        <h3>Words in notes</h3>
-        <div class="table-scroll"><table class="slice-table" id="keyword-table"></table></div>
+        <div id="tag-chart"></div>
+        <div class="note-text" id="tag-note"></div>
       </div>
 
       <div class="card">
         <h2>Risk discipline</h2>
-        <div class="stats-grid" id="risk-stats"></div>
+        <div class="note-text" id="risk-note"></div>
         <div class="two-column">
           <div>
             <h3>Stop-loss size</h3>
-            <div class="table-scroll"><table class="slice-table" id="stop-loss-table"></table></div>
+            <div id="stop-loss-chart"></div>
           </div>
           <div>
             <h3>Hold time</h3>
-            <div class="table-scroll"><table class="slice-table" id="hold-table"></table></div>
+            <div id="hold-chart"></div>
           </div>
         </div>
       </div>
