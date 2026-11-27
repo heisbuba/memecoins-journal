@@ -236,14 +236,15 @@ function renderJournal() {
       .map(({ trade, index, metrics }) => {
         const isExpanded = expandedTradeIds.has(trade.id);
         const notesRow = isExpanded
-          ? `<tr class="notes-row" name="notes"><td colspan="${headerColumns.length + 1}"><div class="notes-text">${
+          ? `<tr class="notes-row" name="notes" data-trade-id="${trade.id}"><td colspan="${headerColumns.length + 1}"><div class="notes-text">${
               trade.Notes ? escapeHtml(trade.Notes) : "<em>No notes for this trade.</em>"
-            }</div></td></tr>`
+            }</div>${chartSlotsHtml(trade)}</td></tr>`
           : "";
         return (
           `<tr class="trade-row${isExpanded ? " expanded" : ""}" data-trade-id="${trade.id}">` +
           headerColumns.map(column => cellFor(column, trade, metrics)).join("") +
-          `<td><a href="#" data-index="${index}" class="edit-link" title="Edit">✎</a> ` +
+          `<td>${trade.beforeChart || trade.afterChart ? '<span title="Has charts">📷</span> ' : ""}` +
+          `<a href="#" data-index="${index}" class="edit-link" title="Edit">✎</a> ` +
           `<a href="#" data-index="${index}" class="delete-link" title="Delete">✕</a></td></tr>` +
           notesRow
         );
@@ -352,6 +353,52 @@ function toggleNotes(target) {
   renderJournal();
 }
 
+let pendingChart = null;
+const chartFileInput = byId("chart-file-input");
+
+async function changeChart(action, doneMessage) {
+  setStatus("Saving chart...");
+  try {
+    await action();
+    await loadTrades();
+    setStatus(doneMessage);
+  } catch (error) {
+    if (error.message == "locked") return loadTrades();
+    setStatus("Chart failed: " + error.message);
+  }
+}
+
+function handleChartAction(button) {
+  const tradeId = +button.closest("tr.notes-row").dataset.tradeId;
+  const { chartAction, slot } = button.dataset;
+  if (chartAction == "view") return openLightbox(trades.find(trade => trade.id == tradeId), slot);
+  if (chartAction == "remove") {
+    if (confirm("Remove the " + slot + " chart?")) changeChart(() => removeChart(tradeId, slot), "Chart removed ✓");
+    return;
+  }
+  pendingChart = { tradeId, slot };
+  chartFileInput.click();
+}
+
+chartFileInput.onchange = () => {
+  const file = chartFileInput.files[0];
+  chartFileInput.value = "";
+  if (!file || !pendingChart) return;
+  const { tradeId, slot } = pendingChart;
+  changeChart(() => uploadChart(tradeId, slot, file), "Chart saved ✓");
+};
+
+// paste a screenshot into the open trade: fills Before first, then After
+document.addEventListener("paste", event => {
+  const file = [...event.clipboardData.files].find(item => item.type.startsWith("image/"));
+  const trade = trades.find(entry => expandedTradeIds.has(entry.id));
+  if (!file || !trade) return;
+  const slot = !trade.beforeChart ? "before" : !trade.afterChart ? "after" : null;
+  if (!slot) return setStatus("Both charts are set. Use replace.");
+  event.preventDefault();
+  changeChart(() => uploadChart(trade.id, slot, file), "Chart saved ✓");
+});
+
 byId("trades-table").onclick = async event => {
   const header = event.target.closest && event.target.closest("th[data-column]");
   if (header) {
@@ -360,6 +407,11 @@ byId("trades-table").onclick = async event => {
     sortColumn = column;
     currentPage = 0;
     return renderJournal();
+  }
+  const chartButton = event.target.closest("[data-chart-action]");
+  if (chartButton) {
+    event.preventDefault();
+    return handleChartAction(chartButton);
   }
   const classes = event.target.classList;
   if (classes.contains("edit-link")) {

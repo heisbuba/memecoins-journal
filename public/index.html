@@ -139,7 +139,18 @@
     </div>
   </main>
 
+  <input type="file" id="chart-file-input" accept="image/*" hidden>
+  <div id="chart-lightbox" class="chart-lightbox" hidden>
+    <div class="chart-lightbox-bar">
+      <button class="secondary" id="chart-lightbox-before">Before</button>
+      <button class="secondary" id="chart-lightbox-after">After</button>
+      <button class="secondary" id="chart-lightbox-close" aria-label="Close">✕</button>
+    </div>
+    <img id="chart-lightbox-image" alt="Trade chart">
+  </div>
+
   <script src="calc.js"></script>
+  <script src="charts.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

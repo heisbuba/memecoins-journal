@@ -1,8 +1,9 @@
-const CACHE = "journal-shell-v2";
+const CACHE = "journal-shell-v3";
 const SHELL = [
   "/",
   "/style.css",
   "/calc.js",
+  "/charts.js",
   "/app.js",
   "/manifest.webmanifest",
   "/favicon.ico",
