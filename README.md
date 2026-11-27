@@ -1,7 +1,7 @@
 # Memecoins Trading Journal
 
 My manual, static, serverless memecoin trading journal. Live at
-[journal.quantvat.name.ng](https://journal.quantvat.name.ng). PIN-locked like the wapka sites of 2017. 🔒 Hosted on Cloudflare.
+[journal.quantvat.name.ng](https://journal.quantvat.name.ng). PIN-locked like the wapka sites of 2017.
 
 ## Features
 
