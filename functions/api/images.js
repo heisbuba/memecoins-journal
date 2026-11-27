@@ -2,7 +2,7 @@
 const SLOT_COLUMN = { before: "before_image", after: "after_image" };
 const EXTENSIONS = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 const MAX_BYTES = 5 * 1024 * 1024;
-const KEY_PATTERN = /^trades\/\d+\/(before|after)-\d+\.(png|jpg|webp)$/;
+const KEY_PATTERN = /^trades\/\d+\/[A-Za-z0-9]{1,30}_(before|after)_chart\.(png|jpg|webp)$/;
 
 const jsonResponse = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -26,20 +26,27 @@ function readTarget(request) {
   return id && SLOT_COLUMN[slot] ? { id, slot, column: SLOT_COLUMN[slot] } : null;
 }
 
-const findCurrentKey = (env, target) =>
-  env.DB.prepare(`SELECT ${target.column} AS key FROM trades WHERE id=?`).bind(target.id).first();
+const findTrade = (env, target) =>
+  env.DB.prepare(`SELECT ${target.column} AS key, ticker FROM trades WHERE id=?`).bind(target.id).first();
+
+// trades/<id>/<ticker>_<slot>_chart.<ext>
+function buildKey(trade, target, extension) {
+  const ticker = String(trade.ticker ?? "").replace(/[^A-Za-z0-9]/g, "").slice(0, 30) || "trade";
+  return `trades/${target.id}/${ticker}_${target.slot}_chart.${extension}`;
+}
 
 export const onRequestGet = guarded(async ({ env, request }) => {
   const key = new URL(request.url).searchParams.get("key") || "";
   if (!KEY_PATTERN.test(key)) return jsonResponse({ error: "bad key" }, 400);
-  const object = await env.BUCKET.get(key);
+  const object = await env.BUCKET.get(key, { onlyIf: request.headers });
   if (!object) return jsonResponse({ error: "not found" }, 404);
-  return new Response(object.body, {
-    headers: {
-      "Content-Type": object.httpMetadata.contentType,
-      "Cache-Control": "private, max-age=31536000, immutable"
-    }
-  });
+  const headers = {
+    "Content-Type": object.httpMetadata.contentType,
+    "Content-Disposition": `inline; filename="${key.split("/").pop()}"`,
+    "Cache-Control": "private, no-cache",
+    ETag: object.httpEtag
+  };
+  return new Response(object.body ?? null, { status: object.body ? 200 : 304, headers });
 });
 
 export const onRequestPut = guarded(async ({ env, request }) => {
@@ -51,13 +58,13 @@ export const onRequestPut = guarded(async ({ env, request }) => {
   const bytes = await request.arrayBuffer();
   if (!bytes.byteLength || bytes.byteLength > MAX_BYTES) return jsonResponse({ error: "image must be under 5 MB" }, 413);
 
-  const current = await findCurrentKey(env, target);
-  if (!current) return jsonResponse({ error: "trade not found" }, 404);
+  const trade = await findTrade(env, target);
+  if (!trade) return jsonResponse({ error: "trade not found" }, 404);
 
-  const key = `trades/${target.id}/${target.slot}-${Date.now()}.${extension}`;
+  const key = buildKey(trade, target, extension);
   await env.BUCKET.put(key, bytes, { httpMetadata: { contentType } });
   await env.DB.prepare(`UPDATE trades SET ${target.column}=? WHERE id=?`).bind(key, target.id).run();
-  if (current.key) await env.BUCKET.delete(current.key);
+  if (trade.key && trade.key !== key) await env.BUCKET.delete(trade.key);
   return jsonResponse({ key });
 });
 
@@ -65,10 +72,10 @@ export const onRequestDelete = guarded(async ({ env, request }) => {
   const target = readTarget(request);
   if (!target) return jsonResponse({ error: "id and slot required" }, 400);
 
-  const current = await findCurrentKey(env, target);
-  if (!current) return jsonResponse({ error: "trade not found" }, 404);
+  const trade = await findTrade(env, target);
+  if (!trade) return jsonResponse({ error: "trade not found" }, 404);
 
   await env.DB.prepare(`UPDATE trades SET ${target.column}=NULL WHERE id=?`).bind(target.id).run();
-  if (current.key) await env.BUCKET.delete(current.key);
+  if (trade.key) await env.BUCKET.delete(trade.key);
   return jsonResponse({ deleted: target.slot });
 });
