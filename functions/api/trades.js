@@ -53,6 +53,8 @@ export const onRequestGet = guarded(async ({ env }) => {
     results.map(row => {
       const trade = { id: row.id };
       for (const field in FIELD_TO_COLUMN) trade[field] = row[FIELD_TO_COLUMN[field]] ?? "";
+      trade.beforeChart = row.before_image ?? "";
+      trade.afterChart = row.after_image ?? "";
       return trade;
     })
   );
@@ -83,7 +85,10 @@ export const onRequestPost = guarded(async ({ env, request }) => {
 export const onRequestDelete = guarded(async ({ env, request }) => {
   const id = +new URL(request.url).searchParams.get("id");
   if (!id) return jsonResponse({ error: "id required" }, 400);
+  const charts = await env.DB.prepare("SELECT before_image, after_image FROM trades WHERE id=?").bind(id).first();
   await env.DB.prepare("DELETE FROM trades WHERE id=?").bind(id).run();
+  const chartKeys = [charts?.before_image, charts?.after_image].filter(Boolean);
+  if (chartKeys.length) await env.BUCKET.delete(chartKeys);
   return jsonResponse({ deleted: id });
 });
 
